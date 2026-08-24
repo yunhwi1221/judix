@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>필드로그 지원서 분석 — JudiX 심사위원</title>
+<meta name="description" content="지원서 AI 분석 결과와 5대 평가기준별 상세, 심사 질문 추천, 점수·의견 입력 화면.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap">
+
+<style>
+/* ============================================================
+   JudiX 디자인 토큰 — 디자인가이드 v0.1 (2·3장)
+   index.html / judge-dashboard.html 과 동일한 블록
+   ============================================================ */
+:root {
+  --primary-950: #2E0140;
+  --primary-900: #4D026A;
+  --primary-700: #7A1C99;
+  --primary-100: #F1E4F7;
+
+  --accent-600: #B8850C;
+  --accent-500: #F5B700;
+  --accent-300: #FBD65C;
+  --accent-100: #FDF0C9;
+
+  --cream-bg: #F7F2E8;
+  --white:    #FFFFFF;
+  --gray-50:  #F4F2F5;
+  --gray-200: #E4DEE8;
+  --text-900: #231A2B;
+  --text-500: #6B6270;
+
+  --success: #1E8E5A;
+  --warning: #B8850C;
+  --danger:  #C4324B;
+  --info:    #3B5BA5;
+
+  --success-bg: #E3F3EB;
+  --danger-bg:  #FAE9EC;
+  --info-bg:    #E8EDF7;
+
+  --on-dark-muted: #CFC3D6;
+
+  --font-sans: "Pretendard Variable", Pretendard, Inter, -apple-system,
+               BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", sans-serif;
+  --font-mono: "JetBrains Mono", "Roboto Mono", Consolas, monospace;
+
+  --fs-h1: 30px;       --lh-h1: 1.3;
+  --fs-h2: 24px;       --lh-h2: 1.3;
+  --fs-h3: 19px;       --lh-h3: 1.4;
+  --fs-body-l: 17px;   --lh-body: 1.6;
+  --fs-body-m: 15px;
+  --fs-caption: 13px;  --lh-caption: 1.5;
+  --fs-stat: 40px;     --lh-stat: 1.1;
+
+  --radius-card: 16px;
+  --radius-pill: 999px;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --header-h: 68px;
+}
+
+/* ---------- reset ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body-l);
+  line-height: var(--lh-body);
+  color: var(--text-900);
+  background: var(--gray-50);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+h1, h2, h3, h4, p, ul, figure, blockquote { margin: 0; }
+ul { padding: 0; list-style: none; }
+a { color: inherit; }
+svg { display: block; }
+button, input, textarea, select { font: inherit; }
+table { border-collapse: collapse; }
+
+.wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 24px; }
+.h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; letter-spacing: -0.01em; }
+.h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 600; }
+.body-l { font-size: var(--fs-body-l); line-height: var(--lh-body); }
+.body-m { font-size: var(--fs-body-m); line-height: var(--lh-body); }
+.caption { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: 500; }
+.muted { color: var(--text-500); }
+.mono { font-family: var(--font-mono); }
+
+.skip-link {
+  position: absolute; left: -9999px; top: 0; z-index: 100;
+  background: var(--primary-900); color: var(--white);
+  padding: 12px 20px; border-radius: 0 0 8px 0; font-weight: 600;
+}
+.skip-link:focus { left: 0; }
+:focus-visible { outline: 3px solid var(--primary-700); outline-offset: 2px; }
+
+/* ---------- 버튼 ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 24px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-body-l); font-weight: 600;
+  text-decoration: none; cursor: pointer; border: 1.5px solid transparent;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+  white-space: nowrap;
+}
+.btn--primary { background: var(--primary-900); color: var(--white); }
+.btn--primary:hover { background: var(--primary-700); }
+.btn--secondary { background: var(--white); color: var(--primary-900); border-color: var(--primary-900); }
+.btn--secondary:hover { background: var(--primary-100); }
+.btn--ghost { background: var(--white); color: var(--text-900); border-color: var(--gray-200); }
+.btn--ghost:hover { background: var(--gray-50); border-color: var(--primary-700); }
+.btn--accent { background: var(--accent-500); color: var(--text-900); }
+.btn--accent:hover { background: var(--accent-300); }
+.btn--sm { min-height: 44px; padding: 0 16px; font-size: var(--fs-body-m); }
+.btn--full { width: 100%; }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+/* ---------- 배지 ---------- */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--fs-caption); line-height: 1; font-weight: 600;
+  padding: 7px 11px; border-radius: var(--radius-pill);
+  background: var(--accent-100); color: var(--accent-600);
+  white-space: nowrap;
+}
+.badge::before { content: "●"; font-size: 9px; }
+.badge--purple  { background: var(--primary-100); color: var(--primary-900); }
+.badge--success { background: var(--success-bg); color: var(--success); }
+.badge--danger  { background: var(--danger-bg);  color: var(--danger); }
+.badge--info    { background: var(--info-bg);    color: var(--info); }
+.badge--neutral { background: var(--gray-50); color: var(--text-500); border: 1px solid var(--gray-200); }
+
+/* ---------- 카드 ---------- */
+.card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 28px;
+}
+.card + .card { margin-top: 24px; }
+.card-head { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.card-head .h3 { display: flex; align-items: center; gap: 10px; }
+.card-head .h3 svg { color: var(--primary-700); flex: none; }
+
+/* ============================================================
+   앱 헤더 + 목업 고지 (대시보드와 동일)
+   ============================================================ */
+.app-header {
+  position: sticky; top: 0; z-index: 50;
+  height: var(--header-h);
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+}
+.app-header .wrap { height: 100%; display: flex; align-items: center; gap: 20px; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: var(--fs-h3); text-decoration: none; letter-spacing: -0.01em; }
+.logo-mark {
+  width: 32px; height: 32px; border-radius: 9px;
+  background: var(--primary-900); color: var(--white);
+  display: grid; place-items: center; font-size: 17px; font-weight: 700;
+}
+.header-divider { width: 1px; height: 28px; background: var(--gray-200); }
+.header-contest { font-size: var(--fs-body-m); font-weight: 600; color: var(--text-500); }
+.header-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+.judge-chip { display: flex; align-items: center; gap: 10px; }
+.judge-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--primary-100); color: var(--primary-900);
+  display: grid; place-items: center; font-weight: 700; font-size: var(--fs-body-m);
+}
+.judge-chip .name { font-size: var(--fs-body-m); font-weight: 600; line-height: 1.3; }
+.judge-chip .code { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-500); }
+
+.mock-note { background: var(--primary-950); color: var(--on-dark-muted); font-size: var(--fs-caption); font-weight: 500; }
+.mock-note .wrap { display: flex; align-items: center; gap: 10px; padding-top: 11px; padding-bottom: 11px; }
+.mock-note svg { flex: none; color: var(--accent-300); }
+.mock-note a { color: var(--white); font-weight: 600; margin-left: auto; white-space: nowrap; }
+
+/* ============================================================
+   지원서 헤더
+   ============================================================ */
+.page { padding: 24px 0 80px; }
+.backlink {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px;
+  font-size: var(--fs-body-m); font-weight: 600; color: var(--primary-900); text-decoration: none;
+}
+.backlink:hover { text-decoration: underline; }
+
+.app-head { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: flex-start; margin: 8px 0 24px; }
+.app-head h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 700; letter-spacing: -0.02em; }
+.app-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; }
+.app-meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: var(--fs-body-m); color: var(--text-500); }
+.app-meta strong { color: var(--text-900); font-weight: 600; }
+
+/* ============================================================
+   본문 2단 레이아웃
+   ============================================================ */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 372px; gap: 24px; align-items: start; }
+.sidebar { position: sticky; top: calc(var(--header-h) + 16px); }
+
+/* ============================================================
+   5.2 요약 카드
+   ============================================================ */
+.summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+.summary-item { padding: 18px 20px; border: 1px solid var(--gray-200); border-radius: 12px; background: var(--gray-50); }
+.summary-item.is-full { grid-column: 1 / -1; background: var(--primary-100); border-color: var(--primary-100); }
+.summary-item h4 { font-size: var(--fs-caption); font-weight: 700; letter-spacing: .04em; color: var(--primary-700); margin-bottom: 8px; }
+.summary-item p { font-size: var(--fs-body-m); }
+.summary-item.is-risk { background: var(--danger-bg); border-color: #F0D2D8; }
+.summary-item.is-risk h4 { color: var(--danger); }
+.summary-item.is-strength { background: var(--success-bg); border-color: #CFE7DB; }
+.summary-item.is-strength h4 { color: var(--success); }
+.summary-item ul li { display: flex; gap: 8px; font-size: var(--fs-body-m); padding: 3px 0; }
+.summary-item ul li::before { content: "·"; font-weight: 700; flex: none; }
+
+/* ============================================================
+   5.1 5대 기준 탭
+   ============================================================ */
+.tabs {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 24px;
+  border-bottom: 1px solid var(--gray-200);
+}
+.tab {
+  min-height: 48px; padding: 0 16px;
+  background: transparent; border: 0; border-bottom: 3px solid transparent;
+  font-size: var(--fs-body-m); font-weight: 600; color: var(--text-500);
+  cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 8px;
+  transition: color .15s ease, border-color .15s ease;
+}
+.tab:hover { color: var(--primary-900); }
+.tab[aria-selected="true"] { color: var(--primary-900); border-bottom-color: var(--primary-900); }
+.tab .no { font-family: var(--font-mono); font-size: var(--fs-caption); }
+.tab .flag { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-500); flex: none; }
+
+.panel[hidden] { display: none; }
+.panel-head { margin-bottom: 20px; }
+.panel-head .h3 { margin-bottom: 6px; }
+.panel-question { font-size: var(--fs-body-m); color: var(--text-500); }
+
+/* 강점 / 부족한 점 / 보완 필요사항 3단 */
+.finding { border: 1px solid var(--gray-200); border-radius: 12px; padding: 18px 20px; }
+.finding + .finding { margin-top: 14px; }
+.finding-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.finding-head .ico { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.finding-head h4 { font-size: var(--fs-body-m); font-weight: 700; }
+.finding p { font-size: var(--fs-body-l); }
+.finding--good  { border-color: #CFE7DB; background: #F5FBF8; }
+.finding--good .ico  { background: var(--success-bg); color: var(--success); }
+.finding--good h4 { color: var(--success); }
+.finding--gap   { border-color: #F0E2C2; background: #FFFCF4; }
+.finding--gap .ico   { background: var(--accent-100); color: var(--accent-600); }
+.finding--gap h4 { color: var(--accent-600); }
+.finding--todo  { border-color: #D6DEEE; background: #F7F9FD; }
+.finding--todo .ico  { background: var(--info-bg); color: var(--info); }
+.finding--todo h4 { color: var(--info); }
+.finding--none  { border-color: #F0D2D8; background: #FEF8F9; }
+.finding--none .ico  { background: var(--danger-bg); color: var(--danger); }
+.finding--none h4 { color: var(--danger); }
+
+/* 8장 설명가능성 — 근거 문장 인용 */
+.evidence {
+  margin-top: 12px; padding: 12px 16px;
+  background: var(--white); border-left: 3px solid var(--primary-700); border-radius: 0 8px 8px 0;
+}
+.evidence .src { display: block; font-size: var(--fs-caption); font-weight: 600; color: var(--primary-700); margin-bottom: 4px; }
+.evidence q { font-size: var(--fs-body-m); color: var(--text-900); font-style: normal; }
+
+/* ============================================================
+   5.3 질문 비서
+   ============================================================ */
+.q-item { border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px; }
+.q-item + .q-item { margin-top: 14px; }
+.q-item.is-picked { border-color: var(--success); background: #F5FBF8; }
+.q-item.is-dropped { opacity: .45; }
+.q-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.q-text { font-size: var(--fs-body-l); font-weight: 600; margin-bottom: 8px; }
+.q-why { font-size: var(--fs-body-m); color: var(--text-500); margin-bottom: 14px; }
+.q-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.q-edit { display: none; width: 100%; margin-bottom: 12px; }
+.q-item.is-editing .q-edit { display: block; }
+.q-item.is-editing .q-text { display: none; }
+textarea, input[type="text"], input[type="number"] {
+  width: 100%; padding: 12px 14px; min-height: 44px;
+  border: 1px solid var(--gray-200); border-radius: 10px;
+  font-size: var(--fs-body-m); color: var(--text-900); background: var(--white);
+  resize: vertical;
+}
+textarea:focus, input:focus { border-color: var(--primary-700); border-width: 2px; outline: none; padding: 11px 13px; }
+
+/* ============================================================
+   5.5 경력 검증 표 (5장 표 규칙)
+   ============================================================ */
+.table-scroll { overflow-x: auto; border: 1px solid var(--gray-200); border-radius: 12px; }
+.data-table { width: 100%; min-width: 620px; font-size: var(--fs-body-m); }
+.data-table th, .data-table td { padding: 14px 18px; text-align: left; vertical-align: middle; }
+.data-table thead th { background: var(--primary-900); color: var(--white); font-weight: 600; white-space: nowrap; }
+.data-table tbody tr { border-top: 1px solid var(--gray-200); }
+.data-table tbody tr:nth-child(even) { background: var(--gray-50); }
+.data-table .who { font-weight: 600; white-space: nowrap; }
+
+/* ============================================================
+   5.6 신뢰성 점검 · 영상 일치성
+   ============================================================ */
+.integrity-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
+.integrity-item { border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px 18px; }
+.integrity-item .lab { font-size: var(--fs-caption); font-weight: 600; color: var(--text-500); margin-bottom: 8px; }
+.integrity-item .val { font-size: var(--fs-body-m); font-weight: 600; }
+
+.mismatch { border: 1px solid #F0D2D8; background: #FEF8F9; border-radius: 12px; padding: 18px 20px; }
+.mismatch-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.mismatch-head h4 { font-size: var(--fs-body-m); font-weight: 700; color: var(--danger); }
+.mismatch-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.mismatch-side { background: var(--white); border: 1px solid var(--gray-200); border-radius: 10px; padding: 14px 16px; }
+.mismatch-side .src { display: block; font-size: var(--fs-caption); font-weight: 700; color: var(--primary-700); margin-bottom: 6px; }
+.mismatch-side q { font-size: var(--fs-body-m); font-style: normal; }
+
+/* ============================================================
+   사이드바 — 점수 / 코멘트 / 제출
+   ============================================================ */
+.score-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--gray-200); }
+.score-row:last-of-type { border-bottom: 0; }
+.score-row label { flex: 1; font-size: var(--fs-body-m); font-weight: 600; }
+.score-row label span { display: block; font-size: var(--fs-caption); font-weight: 500; color: var(--text-500); }
+.score-row input {
+  width: 82px; flex: none; text-align: center;
+  font-family: var(--font-mono); font-size: var(--fs-h3); font-weight: 700;
+}
+.score-row .max { font-family: var(--font-mono); font-size: var(--fs-body-m); color: var(--text-500); flex: none; width: 34px; }
+
+.total {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin-top: 18px; padding: 18px 20px;
+  background: var(--primary-950); color: var(--white); border-radius: 12px;
+}
+.total .lab { font-size: var(--fs-body-m); font-weight: 600; }
+.total .val { font-family: var(--font-mono); font-size: var(--fs-stat); line-height: 1; font-weight: 700; color: var(--accent-300); }
+.total .val small { font-size: var(--fs-body-m); color: var(--on-dark-muted); font-weight: 700; }
+
+.field-label { display: block; font-size: var(--fs-body-m); font-weight: 600; margin-bottom: 8px; }
+.field-hint { font-size: var(--fs-caption); color: var(--text-500); margin-top: 8px; }
+.draft-out { margin-top: 14px; }
+.draft-out[hidden] { display: none; }
+
+.submit-note {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 16px; font-size: var(--fs-caption); color: var(--text-500);
+}
+.submit-note svg { flex: none; margin-top: 2px; color: var(--info); }
+
+/* 토스트 */
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+  background: var(--primary-950); color: var(--white);
+  padding: 14px 22px; border-radius: var(--radius-pill);
+  font-size: var(--fs-body-m); font-weight: 600;
+  box-shadow: 0 6px 24px rgba(0,0,0,.24);
+  opacity: 0; visibility: hidden; transition: opacity .15s ease, visibility .15s ease;
+  z-index: 80; max-width: calc(100% - 32px); text-align: center;
+}
+.toast.is-on { opacity: 1; visibility: visible; }
+
+/* ============================================================
+   반응형
+   ============================================================ */
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+}
+@media (max-width: 900px) {
+  .summary-grid, .integrity-grid, .mismatch-pair { grid-template-columns: 1fr; }
+  .judge-chip .name, .judge-chip .code { display: none; }
+}
+@media (max-width: 768px) {
+  :root { --fs-h1: 25px; --fs-stat: 34px; }
+  .card { padding: 20px; }
+  .header-contest, .header-divider { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
+
+<!-- ============ 앱 헤더 ============ -->
+<header class="app-header">
+  <div class="wrap">
+    <a class="logo" href="index.html">
+      <span class="logo-mark" aria-hidden="true">J</span>
+      <span>JudiX</span>
+    </a>
+    <span class="header-divider" aria-hidden="true"></span>
+    <span class="header-contest">2026 청년 창업경진대회 · 본선</span>
+
+    <div class="header-right">
+      <span class="badge badge--info">심사 진행중</span>
+      <div class="judge-chip">
+        <span class="judge-avatar" aria-hidden="true">김</span>
+        <div>
+          <span class="name">김유니 심사위원</span>
+          <span class="code">JD-2026-014</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 목업 고지 ============ -->
+<div class="mock-note">
+  <div class="wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span>이 화면은 UI 목업입니다. 팀명·분석 결과·점수는 모두 예시 데이터이며 실제 심사 자료가 아닙니다.</span>
+    <a href="judge-dashboard.html">← 목록으로</a>
+  </div>
+</div>
+
+<main id="main" class="page">
+  <div class="wrap">
+
+    <a class="backlink" href="judge-dashboard.html">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+      내가 평가할 팀
+    </a>
+
+    <!-- ============ 지원서 헤더 ============ -->
+    <div class="app-head">
+      <div>
+        <div class="app-title-row">
+          <h1>필드로그</h1>
+          <span class="badge badge--info">심사 진행중</span>
+          <span class="badge">AI 확인 필요 1건</span>
+        </div>
+        <p class="body-l muted" style="margin-bottom:12px;">노지 작물 생육 데이터 수집·예측 플랫폼</p>
+        <div class="app-meta">
+          <span>분야 <strong>농업 · AI</strong></span>
+          <span>지원번호 <strong class="mono">A-2026-0047</strong></span>
+          <span>제출일 <strong>2026-08-11</strong></span>
+          <span>첨부 <strong>사업계획서 14p · 소개영상 3분 20초</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+
+      <!-- ==================== 좌: 분석 본문 ==================== -->
+      <div>
+
+        <!-- ---------- 5.2 한눈에 보는 요약 카드 ---------- -->
+        <section class="card" aria-labelledby="sum-title">
+          <div class="card-head">
+            <h2 class="h3" id="sum-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+              한눈에 보는 요약
+            </h2>
+            <span class="caption muted">AI 분석 · 참고용</span>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-item is-full">
+              <h4>지원자 요약</h4>
+              <p>노지 재배 농가에 생육 데이터가 축적되지 않는 문제를 해결하기 위한, 저가형 토양·기상 센서와 위성영상을 결합한 생육 예측 플랫폼입니다.</p>
+            </div>
+
+            <div class="summary-item">
+              <h4>핵심 고객</h4>
+              <p>재배면적 5~10ha 규모의 노지 채소 농가와 산지유통센터(APC)</p>
+            </div>
+
+            <div class="summary-item">
+              <h4>핵심 해결책</h4>
+              <p>토양 수분·지온 센서 + 위성영상 식생지수를 결합해 수확 시기와 예상 수확량을 예측</p>
+            </div>
+
+            <div class="summary-item is-strength">
+              <h4>AI 분석 강점</h4>
+              <ul>
+                <li>팀 3인 중 2인이 농업 데이터 분야 실무 경력 보유</li>
+                <li>실증 농가 4곳 확보, 1차 파일럿 일정이 구체적</li>
+                <li>문제 정의가 노지 재배로 좁혀져 명확함</li>
+              </ul>
+            </div>
+
+            <div class="summary-item is-risk">
+              <h4>주요 리스크</h4>
+              <ul>
+                <li>시장 규모 수치의 산출 근거 미기재</li>
+                <li>센서 단가·원가 구조 미제시</li>
+                <li>지원서와 소개영상의 타깃 고객 설명 불일치 1건</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- 5.1 5대 평가기준별 분석 ---------- -->
+        <section class="card" aria-labelledby="crit-title">
+          <div class="card-head">
+            <h2 class="h3" id="crit-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+              5대 평가기준별 분석
+            </h2>
+            <span class="caption muted">각 판단에는 근거 문장이 함께 제시됩니다</span>
+          </div>
+
+          <div class="tabs" role="tablist" aria-label="평가기준 선택">
+            <button class="tab" role="tab" aria-selected="true"  aria-controls="p1" id="t1"><span class="no">01</span> 역량·실현가능성</button>
+            <button class="tab" role="tab" aria-selected="false" aria-controls="p2" id="t2"><span class="no">02</span> 문제·해결책</button>
+            <button class="tab" role="tab" aria-selected="false" aria-controls="p3" id="t3"><span class="no">03</span> 사업화 가능성 <span class="flag" aria-hidden="true"></span></button>
+            <button class="tab" role="tab" aria-selected="false" aria-controls="p4" id="t4"><span class="no">04</span> 차별성·혁신성</button>
+            <button class="tab" role="tab" aria-selected="false" aria-controls="p5" id="t5"><span class="no">05</span> 신뢰성·완성도 <span class="flag" aria-hidden="true"></span></button>
+          </div>
+
+          <!-- ① -->
+          <div class="panel" role="tabpanel" id="p1" aria-labelledby="t1">
+            <div class="panel-head">
+              <h3 class="h3">창업자의 역량 및 실현가능성</h3>
+              <p class="panel-question">아이디어와 지원자의 경험·기술·활동이 얼마나 연결되는가?</p>
+            </div>
+
+            <div class="finding finding--good">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+                <h4>강점</h4>
+              </div>
+              <p>대표와 CTO의 경력이 아이디어 주제와 직접 연결됩니다. 농업 데이터 분석과 위성영상 처리라는 두 축이 팀 내부에 모두 확보되어 있습니다.</p>
+              <div class="evidence">
+                <span class="src">근거 · 사업계획서 2p</span>
+                <q>대표는 농업기술원에서 3년간 노지 채소 생육 데이터를 분석했고, CTO는 위성영상 처리 스타트업에서 2년간 근무했습니다.</q>
+              </div>
+            </div>
+
+            <div class="finding finding--gap">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
+                <h4>부족한 점</h4>
+              </div>
+              <p>제품의 핵심이 하드웨어 센서인데, 하드웨어 설계·양산 경험을 가진 인력이 팀 구성에 나타나지 않습니다.</p>
+            </div>
+
+            <div class="finding finding--todo">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+                <h4>보완 필요사항</h4>
+              </div>
+              <p>센서 제조를 위탁할 파트너사 또는 하드웨어 담당 인력 확보 계획을 확인할 필요가 있습니다.</p>
+            </div>
+          </div>
+
+          <!-- ② -->
+          <div class="panel" role="tabpanel" id="p2" aria-labelledby="t2" hidden>
+            <div class="panel-head">
+              <h3 class="h3">문제와 해결책의 명확성</h3>
+              <p class="panel-question">무슨 문제를 해결하며 왜 필요한가? (WHY · WHAT · HOW)</p>
+            </div>
+
+            <div class="finding finding--good">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+                <h4>강점</h4>
+              </div>
+              <p>문제를 "노지 재배"로 좁혀 정의했고, 시설재배와의 차이를 통해 왜 이 문제가 아직 해결되지 않았는지를 설명합니다. 타깃 고객의 재배 규모까지 특정되어 있습니다.</p>
+              <div class="evidence">
+                <span class="src">근거 · 사업계획서 4p</span>
+                <q>시설재배와 달리 노지는 환경 변수가 통제되지 않아 생육 데이터가 축적되지 않고, 농가는 매년 경험에 의존해 수확 시기를 결정합니다.</q>
+              </div>
+            </div>
+
+            <div class="finding finding--gap">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
+                <h4>부족한 점</h4>
+              </div>
+              <p>문제의 중요성을 뒷받침하는 객관적 근거가 제시되지 않았습니다. 수확 시기 오판으로 발생하는 손실 규모에 대한 통계나 출처가 없습니다.</p>
+            </div>
+
+            <div class="finding finding--todo">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+                <h4>보완 필요사항</h4>
+              </div>
+              <p>노지 작물 생산량 변동으로 인한 농가 손실 규모를 공신력 있는 출처와 함께 제시하도록 요청할 수 있습니다.</p>
+            </div>
+          </div>
+
+          <!-- ③ -->
+          <div class="panel" role="tabpanel" id="p3" aria-labelledby="t3" hidden>
+            <div class="panel-head">
+              <h3 class="h3">사업화 및 실행 가능성</h3>
+              <p class="panel-question">실제 사업으로 이어질 수 있는가?</p>
+            </div>
+
+            <div class="finding finding--good">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+                <h4>강점</h4>
+              </div>
+              <p>실증 농가 4곳을 이미 확보했고, 1차 파일럿의 시기와 검증 항목이 구체적으로 기재되어 있습니다.</p>
+              <div class="evidence">
+                <span class="src">근거 · 사업계획서 9p</span>
+                <q>전남 무안 양파 농가 4곳과 실증 협약을 체결했으며, 2026년 10월부터 3개월간 1차 파일럿을 진행합니다.</q>
+              </div>
+            </div>
+
+            <div class="finding finding--none">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg></span>
+                <h4>미근거 주장</h4>
+              </div>
+              <p>시장 규모로 제시된 수치에 산출 근거나 출처가 기재되어 있지 않습니다. 수익모델의 센서 판매 단가 역시 원가 구조 없이 금액만 제시되었습니다.</p>
+              <div class="evidence">
+                <span class="src">근거 · 사업계획서 7p</span>
+                <q>국내 스마트농업 시장은 1.2조 원 규모이며, 이 중 노지 부문은 연 20% 이상 성장하고 있습니다.</q>
+              </div>
+            </div>
+
+            <div class="finding finding--todo">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+                <h4>보완 필요사항</h4>
+              </div>
+              <p>시장 규모의 출처와 산정 방식, 센서 1대당 원가와 판매가, 손익분기 시점을 확인해야 합니다. 아래 <strong>심사 질문 비서</strong>에 관련 질문이 준비되어 있습니다.</p>
+            </div>
+          </div>
+
+          <!-- ④ -->
+          <div class="panel" role="tabpanel" id="p4" aria-labelledby="t4" hidden>
+            <div class="panel-head">
+              <h3 class="h3">차별성 및 혁신성</h3>
+              <p class="panel-question">기존 서비스와 무엇이 다른가?</p>
+            </div>
+
+            <div class="finding finding--good">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+                <h4>강점</h4>
+              </div>
+              <p>국내 경쟁 서비스가 시설재배에 집중된 상황에서 노지에 특화했고, 지상 센서와 위성영상을 결합하는 접근은 비교 대상 2개사에서 확인되지 않습니다.</p>
+              <div class="evidence">
+                <span class="src">근거 · 사업계획서 11p</span>
+                <q>A사와 B사는 모두 스마트온실 제어에 집중하고 있어, 노지 환경의 데이터 수집 문제는 다루지 않습니다.</q>
+              </div>
+            </div>
+
+            <div class="finding finding--gap">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
+                <h4>부족한 점</h4>
+              </div>
+              <p>경쟁 분석이 국내 2개사에 그칩니다. 위성영상 기반 작황 예측은 해외에 유사 서비스가 존재할 가능성이 있으나 언급이 없습니다.</p>
+            </div>
+
+            <div class="finding finding--todo">
+              <div class="finding-head">
+                <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+                <h4>보완 필요사항</h4>
+              </div>
+              <p>해외 유사 서비스를 포함한 경쟁 분석 확대와, 그 대비 방어 가능한 차별점을 확인할 필요가 있습니다.</p>
+            </div>
+          </div>
+
+          <!-- ⑤ -->
+          <div class="panel" role="tabpanel" id="p5" aria-labelledby="t5" hidden>
+            <div class="panel-head">
+              <h3 class="h3">지원서의 신뢰성과 완성도</h3>
+              <p class="panel-question">제출된 내용을 얼마나 신뢰할 수 있는가?</p>
+            </div>
+
+            <div class="integrity-grid">
+              <div class="integrity-item">
+                <p class="lab">AI 생성 가능성</p>
+                <p class="val"><span class="badge badge--neutral">Phase 2 도입 예정</span></p>
+                <p class="caption muted" style="margin-top:8px;">정밀 검사 엔진은 외부 API로 Phase 2에 도입됩니다.</p>
+              </div>
+              <div class="integrity-item">
+                <p class="lab">외부자료 유사성(표절)</p>
+                <p class="val"><span class="badge badge--neutral">Phase 2 도입 예정</span></p>
+                <p class="caption muted" style="margin-top:8px;">현재 단계에서는 수치를 제공하지 않습니다.</p>
+              </div>
+              <div class="integrity-item">
+                <p class="lab">출처 확인이 필요한 문장</p>
+                <p class="val"><span class="mono" style="font-size:var(--fs-h3); color:var(--accent-600);">3건</span></p>
+                <p class="caption muted" style="margin-top:8px;">시장 규모 · 성장률 · 손실 규모 관련 서술</p>
+              </div>
+              <div class="integrity-item">
+                <p class="lab">지원서–영상 일치성 (간이)</p>
+                <p class="val"><span class="mono" style="font-size:var(--fs-h3); color:var(--danger);">1건</span> 불일치 후보</p>
+                <p class="caption muted" style="margin-top:8px;">키워드 매칭 수준의 간이 점검 결과</p>
+              </div>
+            </div>
+
+            <div class="mismatch">
+              <div class="mismatch-head">
+                <span class="badge badge--danger">불일치 후보</span>
+                <h4>타깃 고객 설명이 서로 다릅니다</h4>
+              </div>
+              <div class="mismatch-pair">
+                <div class="mismatch-side">
+                  <span class="src">사업계획서 5p</span>
+                  <q>주요 고객은 산지유통센터(APC)와 5ha 이상 규모의 전문 재배 농가입니다.</q>
+                </div>
+                <div class="mismatch-side">
+                  <span class="src">소개영상 01:42 자막</span>
+                  <q>주말농장이나 개인 텃밭을 하시는 분들도 쉽게 쓰실 수 있습니다.</q>
+                </div>
+              </div>
+              <p class="caption muted" style="margin-top:14px;">
+                두 근거를 나란히 제시할 뿐 어느 쪽이 옳은지는 판단하지 않습니다. 키워드 매칭 기반의 간이 점검이므로 오탐일 수 있습니다.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- 5.3 심사 질문 비서 ---------- -->
+        <section class="card" aria-labelledby="q-title">
+          <div class="card-head">
+            <h2 class="h3" id="q-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+              심사 질문 비서
+            </h2>
+            <span class="caption muted" aria-live="polite"><strong id="pickedCount" class="mono">0</strong>건 채택됨</span>
+          </div>
+          <p class="body-m muted" style="margin-bottom:20px;">
+            근거가 빈약한 주장에 대해 확인 질문을 제안합니다. 채택·수정·삭제는 심사위원이 결정합니다.
+          </p>
+
+          <div class="q-item" data-q>
+            <div class="q-top">
+              <span class="badge badge--purple">기준 03 · 사업화 가능성</span>
+              <span class="badge badge--danger">근거 부족</span>
+            </div>
+            <p class="q-text">국내 스마트농업 시장 1.2조 원이라는 수치는 어떤 자료를 근거로 산출하셨습니까?</p>
+            <div class="q-edit"><textarea rows="2" aria-label="질문 수정"></textarea></div>
+            <p class="q-why">사업계획서 7p의 시장 규모 서술에 출처와 산정 방식이 기재되어 있지 않습니다.</p>
+            <div class="q-actions">
+              <button class="btn btn--secondary btn--sm" data-act="pick">채택</button>
+              <button class="btn btn--ghost btn--sm" data-act="edit">수정</button>
+              <button class="btn btn--ghost btn--sm" data-act="drop">삭제</button>
+            </div>
+          </div>
+
+          <div class="q-item" data-q>
+            <div class="q-top">
+              <span class="badge badge--purple">기준 03 · 수익모델</span>
+              <span class="badge badge--danger">근거 부족</span>
+            </div>
+            <p class="q-text">센서 1대당 제조 원가와 판매가는 어떻게 산정하셨고, 손익분기 시점은 언제로 보십니까?</p>
+            <div class="q-edit"><textarea rows="2" aria-label="질문 수정"></textarea></div>
+            <p class="q-why">판매가만 제시되어 있고 원가 구조와 마진이 확인되지 않아 수익성 판단이 어렵습니다.</p>
+            <div class="q-actions">
+              <button class="btn btn--secondary btn--sm" data-act="pick">채택</button>
+              <button class="btn btn--ghost btn--sm" data-act="edit">수정</button>
+              <button class="btn btn--ghost btn--sm" data-act="drop">삭제</button>
+            </div>
+          </div>
+
+          <div class="q-item" data-q>
+            <div class="q-top">
+              <span class="badge badge--purple">기준 01 · 실행역량</span>
+              <span class="badge">확인 필요</span>
+            </div>
+            <p class="q-text">하드웨어 양산 경험이 팀 내에 없는 것으로 보이는데, 센서 제조는 어떤 방식으로 진행하실 계획입니까?</p>
+            <div class="q-edit"><textarea rows="2" aria-label="질문 수정"></textarea></div>
+            <p class="q-why">제품의 핵심이 하드웨어인데 팀 구성에 하드웨어 담당이 나타나지 않습니다.</p>
+            <div class="q-actions">
+              <button class="btn btn--secondary btn--sm" data-act="pick">채택</button>
+              <button class="btn btn--ghost btn--sm" data-act="edit">수정</button>
+              <button class="btn btn--ghost btn--sm" data-act="drop">삭제</button>
+            </div>
+          </div>
+
+          <div class="q-item" data-q>
+            <div class="q-top">
+              <span class="badge badge--purple">기준 05 · 신뢰성</span>
+              <span class="badge">확인 필요</span>
+            </div>
+            <p class="q-text">사업계획서에는 기업 고객 중심으로, 소개영상에는 개인 이용자도 대상으로 설명되어 있습니다. 실제 초기 타깃은 어느 쪽입니까?</p>
+            <div class="q-edit"><textarea rows="2" aria-label="질문 수정"></textarea></div>
+            <p class="q-why">지원서–영상 간이 점검에서 타깃 고객 표현의 불일치 후보가 확인되었습니다.</p>
+            <div class="q-actions">
+              <button class="btn btn--secondary btn--sm" data-act="pick">채택</button>
+              <button class="btn btn--ghost btn--sm" data-act="edit">수정</button>
+              <button class="btn btn--ghost btn--sm" data-act="drop">삭제</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ---------- 5.5 경력 관련성 검증 ---------- -->
+        <section class="card" aria-labelledby="career-title">
+          <div class="card-head">
+            <h2 class="h3" id="career-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+              지원자 경력 관련성
+            </h2>
+            <span class="caption muted">아이디어 주제와의 연결도 분류</span>
+          </div>
+
+          <div class="table-scroll">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">이름</th>
+                  <th scope="col">역할</th>
+                  <th scope="col">주요 경력</th>
+                  <th scope="col">관련성</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row" class="who">김○○</th>
+                  <td>대표 · 데이터</td>
+                  <td>농업기술원 생육 데이터 분석 3년</td>
+                  <td><span class="badge badge--success">관련 있음</span></td>
+                </tr>
+                <tr>
+                  <th scope="row" class="who">이○○</th>
+                  <td>CTO · 개발</td>
+                  <td>위성영상 처리 스타트업 2년</td>
+                  <td><span class="badge badge--success">관련 있음</span></td>
+                </tr>
+                <tr>
+                  <th scope="row" class="who">박○○</th>
+                  <td>디자이너</td>
+                  <td>패션 브랜드 그래픽 디자인 4년</td>
+                  <td><span class="badge">관련성 낮음</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="caption muted" style="margin-top:14px;">
+            관련성이 낮다는 표시는 감점 사유가 아니라 확인이 필요한 지점입니다.
+            팀 역할 구성상 하드웨어 담당이 확인되지 않는 점과 함께 검토하시기 바랍니다.
+          </p>
+        </section>
+      </div>
+
+      <!-- ==================== 우: 점수 · 의견 입력 ==================== -->
+      <aside class="sidebar" aria-labelledby="eval-title">
+        <div class="card">
+          <div class="card-head">
+            <h2 class="h3" id="eval-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+              내 평가
+            </h2>
+            <span class="badge badge--neutral">임시저장됨</span>
+          </div>
+
+          <form id="evalForm">
+            <div class="score-row">
+              <label for="s1">창업자 역량<span>기준 01</span></label>
+              <input type="number" id="s1" class="js-score" min="0" max="20" value="15" aria-describedby="s1max">
+              <span class="max" id="s1max">/ 20</span>
+            </div>
+            <div class="score-row">
+              <label for="s2">문제·해결책<span>기준 02</span></label>
+              <input type="number" id="s2" class="js-score" min="0" max="20" value="16" aria-describedby="s2max">
+              <span class="max" id="s2max">/ 20</span>
+            </div>
+            <div class="score-row">
+              <label for="s3">사업화 가능성<span>기준 03</span></label>
+              <input type="number" id="s3" class="js-score" min="0" max="20" value="13" aria-describedby="s3max">
+              <span class="max" id="s3max">/ 20</span>
+            </div>
+            <div class="score-row">
+              <label for="s4">차별성·혁신성<span>기준 04</span></label>
+              <input type="number" id="s4" class="js-score" min="0" max="20" value="14" aria-describedby="s4max">
+              <span class="max" id="s4max">/ 20</span>
+            </div>
+            <div class="score-row">
+              <label for="s5">신뢰성·완성도<span>기준 05</span></label>
+              <input type="number" id="s5" class="js-score" min="0" max="20" value="14" aria-describedby="s5max">
+              <span class="max" id="s5max">/ 20</span>
+            </div>
+
+            <div class="total">
+              <span class="lab">총점</span>
+              <span class="val" id="totalScore" aria-live="polite">72<small> / 100</small></span>
+            </div>
+
+            <hr style="border:0; border-top:1px solid var(--gray-200); margin:24px 0;">
+
+            <label class="field-label" for="memo">코멘트 메모</label>
+            <textarea id="memo" rows="3" placeholder="예: 팀 경력 좋음, 시장근거 부족, 하드웨어 계획 확인 필요">팀 경력 좋음, 시장근거 부족, 하드웨어 양산 계획 확인 필요</textarea>
+            <p class="field-hint">키워드만 적어두면 정식 피드백 문안 초안을 만들어 드립니다.</p>
+
+            <button type="button" class="btn btn--accent btn--full btn--sm" id="draftBtn" style="margin-top:14px;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></svg>
+              AI 코멘트 초안 생성
+            </button>
+
+            <div class="draft-out" id="draftOut" hidden>
+              <label class="field-label" for="comment" style="margin-top:18px;">최종 코멘트</label>
+              <textarea id="comment" rows="9" aria-describedby="draftHint"></textarea>
+              <p class="field-hint" id="draftHint">
+                초안은 심사위원이 검토·수정한 뒤에만 제출됩니다. 자동 발송되지 않습니다.
+              </p>
+            </div>
+
+            <hr style="border:0; border-top:1px solid var(--gray-200); margin:24px 0;">
+
+            <div class="submit-note">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <span>제출 후에는 운영기관 승인 없이 수정할 수 없습니다. 점수와 코멘트를 확인해 주세요.</span>
+            </div>
+
+            <button type="button" class="btn btn--primary btn--full" id="submitBtn">심사 제출</button>
+            <button type="button" class="btn btn--ghost btn--full btn--sm" id="saveBtn" style="margin-top:10px;">임시저장</button>
+          </form>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  var toastEl = document.getElementById('toast');
+  var toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('is-on'); }, 2800);
+  }
+
+  /* ---------- 5대 기준 탭 ---------- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  tabs.forEach(function (tab, i) {
+    tab.addEventListener('click', function () { select(i); });
+    tab.addEventListener('keydown', function (e) {
+      var next = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : -1;
+      if (next < 0 || next >= tabs.length) return;
+      e.preventDefault();
+      select(next);
+      tabs[next].focus();
+    });
+  });
+  function select(idx) {
+    tabs.forEach(function (t, i) {
+      var on = i === idx;
+      t.setAttribute('aria-selected', String(on));
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+  }
+
+  /* ---------- 5.3 질문 채택 / 수정 / 삭제 ---------- */
+  var countEl = document.getElementById('pickedCount');
+  function refreshCount() {
+    countEl.textContent = document.querySelectorAll('.q-item.is-picked').length;
+  }
+
+  document.querySelectorAll('[data-q]').forEach(function (item) {
+    var textEl = item.querySelector('.q-text');
+    var area = item.querySelector('.q-edit textarea');
+    var pickBtn = item.querySelector('[data-act="pick"]');
+    var editBtn = item.querySelector('[data-act="edit"]');
+
+    item.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-act]');
+      if (!btn) return;
+      var act = btn.dataset.act;
+
+      if (act === 'pick') {
+        var picked = item.classList.toggle('is-picked');
+        item.classList.remove('is-dropped');
+        btn.textContent = picked ? '채택 취소' : '채택';
+        refreshCount();
+        toast(picked ? '질문을 채택했습니다.' : '채택을 취소했습니다.');
+      }
+
+      if (act === 'edit') {
+        var editing = item.classList.toggle('is-editing');
+        if (editing) {
+          area.value = textEl.textContent.trim();
+          editBtn.textContent = '저장';
+          area.focus();
+        } else {
+          var v = area.value.trim();
+          if (v) textEl.textContent = v;
+          editBtn.textContent = '수정';
+          toast('질문을 수정했습니다.');
+        }
+      }
+
+      if (act === 'drop') {
+        item.classList.toggle('is-dropped');
+        if (item.classList.contains('is-dropped')) {
+          item.classList.remove('is-picked', 'is-editing');
+          pickBtn.textContent = '채택';
+          editBtn.textContent = '수정';
+          btn.textContent = '복구';
+          refreshCount();
+        } else {
+          btn.textContent = '삭제';
+        }
+      }
+    });
+  });
+  refreshCount();
+
+  /* ---------- 점수 합산 ---------- */
+  var inputs = Array.prototype.slice.call(document.querySelectorAll('.js-score'));
+  var totalEl = document.getElementById('totalScore');
+  function total() {
+    var sum = inputs.reduce(function (acc, el) {
+      var n = parseInt(el.value, 10);
+      if (isNaN(n)) n = 0;
+      n = Math.max(0, Math.min(20, n));
+      return acc + n;
+    }, 0);
+    totalEl.innerHTML = sum + '<small> / 100</small>';
+  }
+  inputs.forEach(function (el) { el.addEventListener('input', total); });
+  total();
+
+  /* ---------- 5.7 코멘트 초안 생성 (목업 — 실제 AI 호출 아님) ---------- */
+  document.getElementById('draftBtn').addEventListener('click', function () {
+    var memo = document.getElementById('memo').value.trim();
+    if (!memo) { toast('코멘트 메모를 먼저 입력해 주세요.'); return; }
+
+    var keywords = memo.split(/[,\n·]/).map(function (s) { return s.trim(); }).filter(Boolean);
+    var picked = Array.prototype.slice.call(document.querySelectorAll('.q-item.is-picked .q-text'))
+      .map(function (el) { return el.textContent.trim(); });
+
+    var draft =
+      '필드로그 팀의 지원서를 검토한 의견을 아래와 같이 정리합니다.\n\n' +
+      '[총평]\n' +
+      '노지 재배라는 문제 영역을 명확히 좁혀 정의하고, 팀이 해당 분야의 실무 경험을 갖추고 있다는 점이 이 지원서의 가장 큰 강점입니다.\n\n' +
+      '[심사위원 검토 사항]\n' +
+      keywords.map(function (k, i) { return (i + 1) + '. ' + k + '에 대한 검토가 필요합니다.'; }).join('\n') +
+      '\n\n[보완 요청]\n' +
+      '사업화 가능성 항목에서 제시된 수치의 산출 근거를 보완해 주시기 바랍니다. ' +
+      '실증 농가를 확보한 실행력은 높이 평가하나, 이를 매출로 연결하는 경로가 근거와 함께 제시되어야 합니다.' +
+      (picked.length
+        ? '\n\n[발표 시 확인 질문]\n' + picked.map(function (q, i) { return '- ' + q; }).join('\n')
+        : '');
+
+    var out = document.getElementById('draftOut');
+    out.hidden = false;
+    document.getElementById('comment').value = draft;
+    toast('초안을 생성했습니다. 검토 후 수정해 주세요.');
+    document.getElementById('comment').focus();
+  });
+
+  /* ---------- 저장 / 제출 (목업) ---------- */
+  document.getElementById('saveBtn').addEventListener('click', function () {
+    toast('임시저장했습니다. (목업 — 실제 저장되지 않습니다)');
+  });
+  document.getElementById('submitBtn').addEventListener('click', function () {
+    var comment = document.getElementById('comment').value.trim();
+    if (!comment) { toast('코멘트를 작성한 뒤 제출해 주세요.'); return; }
+    toast('심사가 제출되었습니다. (목업 — 실제 제출되지 않습니다)');
+  });
+})();
+</script>
+
+</body>
+</html>
