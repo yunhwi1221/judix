@@ -186,11 +186,28 @@ table { border-collapse: collapse; }
 .user-chip .name { font-size: var(--fs-body-m); font-weight: 600; line-height: 1.3; }
 .user-chip .code { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-500); }
 
-/* 목업 고지 바 */
+/* 목업 고지 바 + 화면 전환기 (목업 전용 — 실제 제품에는 없는 요소) */
 .mock-note { background: var(--primary-950); color: var(--on-dark-muted); font-size: var(--fs-caption); font-weight: 500; }
-.mock-note .wrap { display: flex; align-items: center; gap: 10px; padding-top: 11px; padding-bottom: 11px; }
-.mock-note svg { flex: none; color: var(--accent-300); }
-.mock-note a { color: var(--white); font-weight: 600; margin-left: auto; white-space: nowrap; }
+.mock-note .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 8px; padding-bottom: 8px; }
+.mock-note > .wrap > svg { flex: none; color: var(--accent-300); }
+.mock-note .msg { flex: 1; min-width: 200px; }
+
+.screen-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-left: auto; }
+.screen-nav .lab { color: var(--on-dark-muted); opacity: .7; margin-right: 4px; white-space: nowrap; }
+.screen-nav a {
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 12px;
+  border-radius: var(--radius-pill); white-space: nowrap;
+  color: var(--on-dark-muted); text-decoration: none; font-weight: 600;
+  transition: background-color .15s ease, color .15s ease;
+}
+.screen-nav a:hover { background: rgba(255, 255, 255, .12); color: var(--white); }
+.screen-nav a[aria-current="page"] { background: rgba(255, 255, 255, .16); color: var(--white); }
+.screen-nav a[aria-current="page"]::before { content: "● "; font-size: 8px; margin-right: 5px; color: var(--accent-300); }
+
+@media (max-width: 700px) {
+  .screen-nav { margin-left: 0; }
+  .screen-nav .lab { display: none; }
+}
 
 .backlink {
   display: inline-flex; align-items: center; gap: 8px; min-height: 44px;

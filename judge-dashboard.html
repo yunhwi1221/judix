@@ -143,8 +143,14 @@ body { background: var(--gray-50); }
 <div class="mock-note">
   <div class="wrap">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-    <span>이 화면은 UI 목업입니다. 팀명·점수·분석 결과는 모두 예시 데이터이며, 상세 분석 화면은 <strong style="color:var(--accent-300)">필드로그</strong> 한 팀만 제작되어 있습니다.</span>
-    <a href="index.html">← 랜딩페이지로</a>
+    <span class="msg">이 화면은 UI 목업입니다. 팀명·점수는 예시 데이터이며, 상세 분석은 필드로그 한 팀만 제작되어 있습니다.</span>
+    <nav class="screen-nav" aria-label="목업 화면 이동">
+      <span class="lab">화면 이동</span>
+      <a href="index.html">랜딩</a>
+      <a href="judge-dashboard.html" aria-current="page">심사위원 목록</a>
+      <a href="application-detail.html">지원서 분석</a>
+      <a href="applicant-result.html">지원자 결과</a>
+    </nav>
   </div>
 </div>
 
