@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>로그인 — JudiX</title>
-<meta name="description" content="심사위원·지원자·운영기관 역할별 로그인 화면.">
+<meta name="description" content="JudiX 심사 시스템 로그인.">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,16 +17,16 @@
 /* ---- 로그인 화면 전용 ---- */
 body { background: var(--cream-bg); }
 
-.split { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 56px); }
+.split { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
 
 /* 좌: 브랜드 패널 */
 .brand-pane {
   background: var(--primary-950); color: var(--white);
-  padding: 64px 56px; display: flex; flex-direction: column; justify-content: space-between;
+  padding: 56px; display: flex; flex-direction: column; justify-content: space-between;
 }
 .brand-pane .logo { color: var(--white); font-size: var(--fs-h2); }
 .brand-pane .logo-mark { background: var(--white); color: var(--primary-900); }
-.brand-copy { margin: 56px 0; max-width: 460px; }
+.brand-copy { margin: 48px 0; max-width: 460px; }
 .brand-copy h1 { font-size: var(--fs-display); line-height: var(--lh-display); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 20px; }
 .brand-copy h1 em { font-style: normal; color: var(--accent-300); }
 .brand-copy p { color: var(--on-dark-muted); font-size: var(--fs-body-l); }
@@ -39,71 +39,64 @@ body { background: var(--cream-bg); }
 .form-box > h2 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
 .form-box > .sub { color: var(--text-500); font-size: var(--fs-body-m); margin-bottom: 28px; }
 
-/* 역할 탭 */
-.role-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 28px; }
-.role-tab {
-  min-height: 48px; padding: 0 8px; cursor: pointer;
+.mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 28px; }
+.mode-tab {
+  min-height: 48px; cursor: pointer;
   border: 1px solid var(--gray-200); background: var(--white); border-radius: 12px;
   font-size: var(--fs-body-m); font-weight: 600; color: var(--text-500);
-  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
   transition: background-color .15s ease, border-color .15s ease, color .15s ease;
 }
-.role-tab:hover { border-color: var(--primary-700); color: var(--primary-900); }
-.role-tab[aria-selected="true"] { background: var(--primary-900); border-color: var(--primary-900); color: var(--white); }
-.role-tab svg { flex: none; }
+.mode-tab:hover { border-color: var(--primary-700); color: var(--primary-900); }
+.mode-tab[aria-selected="true"] { background: var(--primary-900); border-color: var(--primary-900); color: var(--white); }
 
 .field + .field { margin-top: 18px; }
-.field-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.field-row a { font-size: var(--fs-caption); font-weight: 600; color: var(--primary-900); }
+.field[hidden] { display: none; }
 
-.role-note {
-  display: flex; gap: 10px; align-items: flex-start; margin-top: 20px;
-  background: var(--gray-50); border: 1px solid var(--gray-200);
-  border-left: 3px solid var(--primary-700); border-radius: 0 10px 10px 0;
-  padding: 12px 14px; font-size: var(--fs-caption); color: var(--text-500);
+.form-error {
+  display: none; gap: 10px; align-items: flex-start; margin-top: 18px;
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-left: 3px solid var(--danger); border-radius: 0 10px 10px 0;
+  padding: 12px 14px; font-size: var(--fs-body-m); color: var(--danger);
 }
-.role-note svg { flex: none; margin-top: 2px; color: var(--primary-700); }
+.form-error.is-on { display: flex; }
+.form-error svg { flex: none; margin-top: 2px; }
 
-.form-actions { margin-top: 28px; }
-.form-foot { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--gray-200); font-size: var(--fs-body-m); color: var(--text-500); }
-.form-foot a { font-weight: 600; color: var(--primary-900); }
+.form-actions { margin-top: 26px; }
+.form-foot { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--gray-200); font-size: var(--fs-body-m); color: var(--text-500); }
+
+/* 데모 계정 */
+.demo { margin-top: 22px; border: 1px solid var(--gray-200); border-radius: 12px; background: var(--white); }
+.demo summary {
+  cursor: pointer; padding: 14px 16px; font-size: var(--fs-body-m); font-weight: 600;
+  list-style: none; display: flex; align-items: center; gap: 8px; min-height: 44px;
+}
+.demo summary::-webkit-details-marker { display: none; }
+.demo summary::after { content: "▾"; margin-left: auto; color: var(--text-500); }
+.demo[open] summary::after { content: "▴"; }
+.demo .body { padding: 0 16px 16px; }
+.demo p { font-size: var(--fs-caption); color: var(--text-500); margin-bottom: 10px; }
+.demo button {
+  display: flex; width: 100%; align-items: center; gap: 10px; text-align: left;
+  min-height: 44px; padding: 8px 12px; margin-bottom: 6px; cursor: pointer;
+  background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px;
+  font-size: var(--fs-caption);
+}
+.demo button:hover { border-color: var(--primary-700); }
+.demo button .r { font-weight: 700; color: var(--primary-900); width: 60px; flex: none; }
+.demo button .e { font-family: var(--font-mono); color: var(--text-500); }
 
 @media (max-width: 980px) {
   .split { grid-template-columns: 1fr; min-height: 0; }
-  .brand-pane { padding: 40px 24px; }
-  .brand-copy { margin: 32px 0; }
+  .brand-pane { padding: 36px 24px; }
+  .brand-copy { margin: 28px 0; }
   .brand-art { display: none; }
-  .form-pane { padding: 40px 24px 64px; }
-}
-@media (max-width: 480px) {
-  .role-tabs { grid-template-columns: 1fr; }
-  .role-tab { justify-content: flex-start; padding: 0 16px; }
+  .form-pane { padding: 36px 24px 64px; }
 }
 </style>
 </head>
 <body>
 
 <a class="skip-link" href="#main">본문으로 건너뛰기</a>
-
-<div class="mock-note">
-  <div class="wrap">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-    <span class="msg">이 화면은 UI 목업입니다. 실제 인증은 동작하지 않으며, 아무 값이나 넣어도 해당 역할 화면으로 이동합니다.</span>
-    <nav class="screen-nav" aria-label="목업 화면 이동">
-      <span class="lab">화면 이동</span>
-      <a href="index.html">랜딩</a>
-      <a href="login.html" aria-current="page">로그인</a>
-      <a href="judge-dashboard.html">심사위원 목록</a>
-      <a href="application-detail.html">지원서 분석</a>
-      <a href="applicant-result.html">지원자 결과</a>
-      <a href="admin-dashboard.html">운영 대시보드</a>
-      <a href="admin-teams.html">참가팀 관리</a>
-      <a href="admin-assign.html">심사위원 배정</a>
-      <a href="admin-results.html">최종 결과</a>
-      <a href="admin-report.html">결과보고서</a>
-    </nav>
-  </div>
-</div>
 
 <main id="main" class="split">
 
@@ -129,54 +122,61 @@ body { background: var(--cream-bg); }
     <p class="brand-foot">2026 청년 창업경진대회 · 본선 심사 시스템</p>
   </section>
 
-  <!-- ============ 우: 로그인 폼 ============ -->
+  <!-- ============ 우: 폼 ============ -->
   <section class="form-pane" aria-labelledby="login-title">
     <div class="form-box">
       <h2 id="login-title">로그인</h2>
-      <p class="sub">역할을 선택한 뒤 발급받으신 정보를 입력해 주세요.</p>
+      <p class="sub" id="formSub">계정 정보를 입력해 주세요.</p>
 
-      <div class="role-tabs" role="tablist" aria-label="역할 선택">
-        <button class="role-tab" role="tab" aria-selected="true" data-role="judge">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-          심사위원
-        </button>
-        <button class="role-tab" role="tab" aria-selected="false" data-role="applicant">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
-          지원자
-        </button>
-        <button class="role-tab" role="tab" aria-selected="false" data-role="admin">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21V9l9-6 9 6v12"/><path d="M9 21v-8h6v8"/></svg>
-          운영기관
-        </button>
+      <div class="mode-tabs" role="tablist" aria-label="로그인 또는 회원가입">
+        <button class="mode-tab" role="tab" aria-selected="true"  data-mode="signin">로그인</button>
+        <button class="mode-tab" role="tab" aria-selected="false" data-mode="signup">회원가입</button>
       </div>
 
-      <form id="loginForm" novalidate>
+      <form id="authForm" novalidate>
+        <div class="field" id="nameField" hidden>
+          <label class="field-label" for="name">이름 또는 팀명</label>
+          <input type="text" id="name" autocomplete="name" placeholder="예: 필드로그">
+        </div>
+
         <div class="field">
           <label class="field-label" for="email">이메일</label>
           <input type="email" id="email" autocomplete="username" placeholder="name@example.com">
         </div>
 
         <div class="field">
-          <div class="field-row">
-            <label class="field-label" for="secret" id="secretLabel">심사위원 코드</label>
-            <a href="#" id="secretHelp">코드를 못 받으셨나요?</a>
-          </div>
-          <input type="text" id="secret" autocomplete="off" placeholder="예: JD-2026-014">
+          <label class="field-label" for="password">비밀번호</label>
+          <input type="password" id="password" autocomplete="current-password" placeholder="6자 이상">
         </div>
 
-        <div class="role-note">
+        <div class="note-box" id="signupNote" style="margin-top:18px; display:none;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <span id="roleNote">심사위원 코드는 운영기관이 대회별로 발급합니다. 배정된 지원서만 열람할 수 있습니다.</span>
+          <span>회원가입으로 만들어지는 계정은 <strong>지원자</strong> 권한입니다. 심사위원·운영기관 계정은 운영기관이 직접 발급합니다.</span>
+        </div>
+
+        <div class="form-error" id="formError" role="alert">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v5M12 16h.01"/></svg>
+          <span id="formErrorText"></span>
         </div>
 
         <div class="form-actions">
-          <button type="submit" class="btn btn--primary btn--full" id="submitBtn">심사위원으로 로그인</button>
+          <button type="submit" class="btn btn--primary btn--full" id="submitBtn">로그인</button>
         </div>
       </form>
 
+      <details class="demo">
+        <summary>데모 계정으로 둘러보기</summary>
+        <div class="body">
+          <p>아래를 누르면 입력란이 채워집니다. 비밀번호는 모두 <strong>judix2026!</strong> 입니다.</p>
+          <button type="button" data-demo="yuni@judix.kr"><span class="r">심사위원</span><span class="e">yuni@judix.kr</span></button>
+          <button type="button" data-demo="fieldlog@judix.kr"><span class="r">지원자</span><span class="e">fieldlog@judix.kr</span></button>
+          <button type="button" data-demo="admin@judix.kr"><span class="r">운영기관</span><span class="e">admin@judix.kr</span></button>
+        </div>
+      </details>
+
       <p class="form-foot">
         계정 관련 문의는 운영기관에 연락해 주세요.
-        <a href="mailto:yunhwi0104@gmail.com?subject=%5BJudiX%5D%20%EA%B3%84%EC%A0%95%20%EB%AC%B8%EC%9D%98">문의하기</a>
+        <a href="mailto:yunhwi0104@gmail.com?subject=%5BJudiX%5D%20%EA%B3%84%EC%A0%95%20%EB%AC%B8%EC%9D%98" style="font-weight:600;color:var(--primary-900)">문의하기</a>
       </p>
     </div>
   </section>
@@ -185,96 +185,109 @@ body { background: var(--cream-bg); }
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="assets/judix-api.js"></script>
 <script>
-(function () {
+JudiX.ready.then(function (api) {
   'use strict';
 
-  var ROLES = {
-    judge: {
-      label: '심사위원',
-      secretLabel: '심사위원 코드',
-      secretPlaceholder: '예: JD-2026-014',
-      help: '코드를 못 받으셨나요?',
-      note: '심사위원 코드는 운영기관이 대회별로 발급합니다. 배정된 지원서만 열람할 수 있습니다.',
-      dest: 'judge-dashboard.html'
-    },
-    applicant: {
-      label: '지원자',
-      secretLabel: '지원번호',
-      secretPlaceholder: '예: A-2026-0047',
-      help: '지원번호를 잊으셨나요?',
-      note: '지원서 접수 시 발급된 지원번호를 입력해 주세요. 본인 지원서의 분석 요약만 열람할 수 있습니다.',
-      dest: 'applicant-result.html'
-    },
-    admin: {
-      label: '운영기관',
-      secretLabel: '비밀번호',
-      secretPlaceholder: '비밀번호를 입력하세요',
-      help: '비밀번호 재설정',
-      note: '대회 개설·심사위원 배정·결과 취합 권한이 있는 계정입니다. 모든 조작은 감사로그에 기록됩니다.',
-      dest: 'admin-dashboard.html'
-    }
-  };
+  var $ = function (s) { return document.querySelector(s); };
+  var mode = 'signin';
 
-  var current = 'judge';
-  var tabs = Array.prototype.slice.call(document.querySelectorAll('.role-tab'));
-  var secret = document.getElementById('secret');
-  var secretLabel = document.getElementById('secretLabel');
-  var secretHelp = document.getElementById('secretHelp');
-  var roleNote = document.getElementById('roleNote');
-  var submitBtn = document.getElementById('submitBtn');
-  var email = document.getElementById('email');
-
-  var toastEl = document.getElementById('toast'), toastTimer;
+  var toastEl = $('#toast'), toastTimer;
   function toast(msg) {
     toastEl.textContent = msg;
     toastEl.classList.add('is-on');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { toastEl.classList.remove('is-on'); }, 2600);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('is-on'); }, 3000);
   }
 
-  function apply(role) {
-    current = role;
-    var r = ROLES[role];
+  function showError(msg) {
+    $('#formErrorText').textContent = msg;
+    $('#formError').classList.add('is-on');
+  }
+  function clearError() { $('#formError').classList.remove('is-on'); }
 
-    tabs.forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.role === role)); });
+  /* 이미 로그인돼 있으면 역할에 맞는 화면으로 */
+  api.me().then(function (me) {
+    if (me) location.replace(api.homeFor(me.profile.role));
+  });
 
-    secretLabel.textContent = r.secretLabel;
-    secret.placeholder = r.secretPlaceholder;
-    secret.type = role === 'admin' ? 'password' : 'text';
-    secret.autocomplete = role === 'admin' ? 'current-password' : 'off';
-    secret.value = '';
-    secretHelp.textContent = r.help;
-    roleNote.textContent = r.note;
-    submitBtn.textContent = r.label + '으로 로그인';
+  /* ---------- 로그인 / 회원가입 전환 ---------- */
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll('.mode-tab').forEach(function (t) {
+      t.setAttribute('aria-selected', String(t.dataset.mode === m));
+    });
+    var up = m === 'signup';
+    $('#login-title').textContent = up ? '회원가입' : '로그인';
+    $('#formSub').textContent = up ? '지원자 계정을 만듭니다.' : '계정 정보를 입력해 주세요.';
+    $('#nameField').hidden = !up;
+    $('#signupNote').style.display = up ? 'flex' : 'none';
+    $('#submitBtn').textContent = up ? '지원자로 가입하기' : '로그인';
+    $('#password').autocomplete = up ? 'new-password' : 'current-password';
+    clearError();
   }
 
-  tabs.forEach(function (tab, i) {
-    tab.addEventListener('click', function () { apply(tab.dataset.role); });
-    tab.addEventListener('keydown', function (e) {
-      var n = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : -1;
-      if (n < 0 || n >= tabs.length) return;
-      e.preventDefault();
-      apply(tabs[n].dataset.role);
-      tabs[n].focus();
+  document.querySelectorAll('.mode-tab').forEach(function (t) {
+    t.addEventListener('click', function () { setMode(t.dataset.mode); });
+  });
+
+  /* ---------- 제출 ---------- */
+  $('#authForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearError();
+
+    var email = $('#email').value.trim();
+    var pw    = $('#password').value;
+    var name  = $('#name').value.trim();
+    var btn   = $('#submitBtn');
+
+    if (!email) { showError('이메일을 입력해 주세요.'); $('#email').focus(); return; }
+    if (!pw)    { showError('비밀번호를 입력해 주세요.'); $('#password').focus(); return; }
+    if (mode === 'signup' && !name) { showError('이름 또는 팀명을 입력해 주세요.'); $('#name').focus(); return; }
+    if (mode === 'signup' && pw.length < 6) { showError('비밀번호는 6자 이상이어야 합니다.'); $('#password').focus(); return; }
+
+    btn.disabled = true;
+    btn.textContent = mode === 'signup' ? '가입 중…' : '로그인 중…';
+
+    try {
+      if (mode === 'signup') {
+        await api.signUp(email, pw, { role: 'applicant', name: name });
+        toast('가입이 완료되었습니다.');
+      } else {
+        await api.signIn(email, pw);
+      }
+      var me = await api.me();
+      if (!me) throw new Error('세션을 만들지 못했습니다. 이메일 인증이 필요한 설정일 수 있습니다.');
+
+      var next = new URLSearchParams(location.search).get('next');
+      location.href = next || api.homeFor(me.profile.role);
+
+    } catch (err) {
+      var msg = String(err.message || err);
+      if (/Invalid login credentials/i.test(msg))            msg = '이메일 또는 비밀번호가 올바르지 않습니다.';
+      else if (/already registered|User already/i.test(msg)) msg = '이미 가입된 이메일입니다. 로그인해 주세요.';
+      else if (/Password should be/i.test(msg))              msg = '비밀번호는 6자 이상이어야 합니다.';
+      else if (/invalid/i.test(msg) && /email/i.test(msg))   msg = '이메일 형식이 올바르지 않습니다.';
+      showError(msg);
+      btn.disabled = false;
+      btn.textContent = mode === 'signup' ? '지원자로 가입하기' : '로그인';
+    }
+  });
+
+  /* ---------- 데모 계정 채우기 ---------- */
+  document.querySelectorAll('[data-demo]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      setMode('signin');
+      $('#email').value = b.dataset.demo;
+      $('#password').value = 'judix2026!';
+      $('#password').focus();
+      toast('입력란을 채웠습니다. 로그인을 눌러 주세요.');
     });
   });
 
-  document.getElementById('loginForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    if (!email.value.trim()) { toast('이메일을 입력해 주세요.'); email.focus(); return; }
-    if (!secret.value.trim()) { toast(ROLES[current].secretLabel + '을(를) 입력해 주세요.'); secret.focus(); return; }
-    toast(ROLES[current].label + ' 화면으로 이동합니다.');
-    setTimeout(function () { window.location.href = ROLES[current].dest; }, 500);
-  });
-
-  secretHelp.addEventListener('click', function (e) {
-    e.preventDefault();
-    toast('목업 화면이라 동작하지 않습니다.');
-  });
-
-  apply('judge');
-})();
+  setMode('signin');
+});
 </script>
 
 </body>

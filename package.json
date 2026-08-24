@@ -1,0 +1,9 @@
+{
+  "name": "judix",
+  "version": "0.1.0",
+  "private": true,
+  "description": "창업대회·해커톤 심사위원용 AI 심사 비서",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

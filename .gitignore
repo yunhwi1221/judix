@@ -62,3 +62,9 @@ env/
 .branches/
 .temp/
 supabase/.temp/
+
+# 로컬 개발
+node_modules/
+
+# 참고용 스크린샷
+HH.png
