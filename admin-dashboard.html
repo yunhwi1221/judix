@@ -133,7 +133,9 @@ body { background: var(--gray-50); }
       <a href="judge-dashboard.html">심사위원 목록</a>
       <a href="application-detail.html">지원서 분석</a>
       <a href="applicant-result.html">지원자 결과</a>
-      <a href="admin-dashboard.html" aria-current="page">운영기관</a>
+      <a href="admin-dashboard.html" aria-current="page">운영 대시보드</a>
+      <a href="admin-teams.html">참가팀 관리</a>
+      <a href="admin-assign.html">심사위원 배정</a>
     </nav>
   </div>
 </div>
@@ -147,7 +149,8 @@ body { background: var(--gray-50); }
         <p class="body-m muted">심사 진행 상황과 평가 편차를 확인하고, 이의제기를 처리합니다.</p>
       </div>
       <div class="head-actions">
-        <button class="btn btn--ghost btn--sm" data-todo="심사위원 배정">심사위원 배정</button>
+        <a class="btn btn--ghost btn--sm" href="admin-teams.html">참가팀 관리</a>
+        <a class="btn btn--ghost btn--sm" href="admin-assign.html">심사위원 배정</a>
         <button class="btn btn--primary btn--sm" data-todo="결과보고서 생성">결과보고서 생성</button>
       </div>
     </div>
@@ -165,11 +168,11 @@ body { background: var(--gray-50); }
           <span class="label">배정된 심사위원</span>
         </div>
         <div class="stat-item">
-          <span class="num">68%</span>
-          <span class="label">전체 심사 진행률</span>
+          <span class="num">29%</span>
+          <span class="label">심사 완료 (12 / 41팀 · 반려 1팀 제외)</span>
         </div>
         <div class="stat-item">
-          <span class="num">07</span>
+          <span class="num">03</span>
           <span class="label">미처리 이의제기</span>
         </div>
       </div>

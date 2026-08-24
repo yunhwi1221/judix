@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>심사위원 배정 — JudiX</title>
+<meta name="description" content="심사위원-지원서 배정 화면. 수동·자동·병행 세 방식을 비교할 수 있는 검토용 목업.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap">
+
+<link rel="stylesheet" href="assets/judix.css">
+
+<style>
+/* ---- 심사위원 배정 전용 ---- */
+body { background: var(--gray-50); }
+.wrap { max-width: 1400px; }
+
+.page { padding: 32px 0 80px; }
+.page-head { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+.page-head h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+
+/* 미결정 사항 안내 */
+.decision {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-left: 3px solid var(--accent-500); border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  padding: 20px 24px; margin-bottom: 24px;
+}
+.decision h2 { display: flex; align-items: center; gap: 10px; font-size: var(--fs-h3); font-weight: 600; margin-bottom: 8px; }
+.decision h2 svg { color: var(--accent-600); flex: none; }
+.decision p { font-size: var(--fs-body-m); color: var(--text-500); }
+
+/* 배정 방식 선택 */
+.modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.mode {
+  text-align: left; cursor: pointer; padding: 18px 20px;
+  border: 1px solid var(--gray-200); background: var(--white); border-radius: 12px;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.mode:hover { border-color: var(--primary-700); }
+.mode[aria-pressed="true"] { border-color: var(--primary-900); border-width: 2px; padding: 17px 19px; background: var(--primary-100); }
+.mode .top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.mode .nm { font-size: var(--fs-h3); font-weight: 600; }
+.mode .desc { font-size: var(--fs-body-m); color: var(--text-500); margin-bottom: 10px; }
+.mode .tradeoff { font-size: var(--fs-caption); color: var(--text-500); display: flex; gap: 6px; padding: 2px 0; }
+.mode .tradeoff b { flex: none; font-weight: 700; }
+.mode .tradeoff.plus b { color: var(--success); }
+.mode .tradeoff.minus b { color: var(--danger); }
+
+/* 규칙 */
+.rules { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.rule label { display: block; font-size: var(--fs-body-m); font-weight: 600; margin-bottom: 8px; }
+.rule .hint { font-size: var(--fs-caption); color: var(--text-500); margin-top: 6px; }
+.switch-row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.switch-row input { width: 20px; height: 20px; min-height: 0; accent-color: var(--primary-900); flex: none; }
+.switch-row label { margin: 0; }
+
+.run-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--gray-200); }
+.run-row .result { font-size: var(--fs-body-m); color: var(--text-500); margin-left: auto; }
+.run-row .result strong { font-family: var(--font-mono); color: var(--text-900); }
+
+/* 2단: 심사위원 부하 | 팀별 배정 */
+.split { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 24px; align-items: start; }
+.col-load { position: sticky; top: calc(var(--header-h) + 16px); }
+.col-load .card { max-height: calc(100vh - var(--header-h) - 32px); overflow-y: auto; }
+
+.judge-row { padding: 12px 0; border-bottom: 1px solid var(--gray-200); }
+.judge-row:last-child { border-bottom: 0; }
+.judge-top { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.judge-top .nm { font-size: var(--fs-body-m); font-weight: 600; }
+.judge-top .fld { font-size: var(--fs-caption); color: var(--text-500); }
+.judge-top .cnt { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-caption); font-weight: 700; color: var(--text-500); }
+.judge-row.is-new .cnt { color: var(--primary-900); }
+.load { height: 8px; border-radius: var(--radius-pill); background: var(--gray-200); overflow: hidden; display: flex; }
+.load .base { height: 100%; background: var(--text-500); opacity: .45; }
+.load .add  { height: 100%; background: var(--primary-900); }
+.load-legend { display: flex; gap: 16px; font-size: var(--fs-caption); color: var(--text-500); margin-bottom: 14px; }
+.load-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg-base, .lg-add { width: 14px; height: 8px; border-radius: 2px; flex: none; }
+.lg-base { background: var(--text-500); opacity: .45; }
+.lg-add { background: var(--primary-900); }
+
+/* 팀별 배정 */
+.assign-table { min-width: 720px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip-j {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: var(--fs-caption); font-weight: 600; padding: 6px 8px 6px 11px;
+  border-radius: var(--radius-pill); background: var(--gray-50);
+  border: 1px solid var(--gray-200); color: var(--text-900); white-space: nowrap;
+}
+.chip-j.is-new { border-color: var(--primary-900); color: var(--primary-900); }
+.chip-j.is-mismatch { border-color: var(--accent-500); color: var(--accent-600); }
+.chip-j .rm {
+  width: 22px; height: 22px; flex: none; border: 0; background: transparent;
+  border-radius: 50%; cursor: pointer; color: var(--text-500);
+  display: grid; place-items: center; padding: 0;
+}
+.chip-j .rm:hover { background: var(--gray-200); color: var(--danger); }
+.chip-j .rm[hidden] { display: none; }
+.add-sel { min-width: 128px; min-height: 36px; font-size: var(--fs-caption); padding: 0 30px 0 10px; background-position: right 8px center; }
+.need { font-family: var(--font-mono); font-size: var(--fs-caption); font-weight: 700; white-space: nowrap; }
+.need.ok { color: var(--success); }
+.need.short { color: var(--danger); }
+
+@media (max-width: 1200px) {
+  .split { grid-template-columns: 1fr; }
+  .col-load { position: static; }
+  .col-load .card { max-height: none; }
+}
+@media (max-width: 900px) {
+  .modes, .rules { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) { .page-head { align-items: flex-start; } }
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
+
+<header class="app-header">
+  <div class="wrap">
+    <a class="logo" href="index.html">
+      <span class="logo-mark" aria-hidden="true">J</span>
+      <span>JudiX</span>
+    </a>
+    <span class="header-divider" aria-hidden="true"></span>
+    <select class="select" aria-label="대회 선택">
+      <option>2026 청년 창업경진대회 · 본선</option>
+    </select>
+    <div class="header-right">
+      <span class="badge badge--brand">운영기관</span>
+      <div class="user-chip">
+        <span class="user-avatar" aria-hidden="true">운</span>
+        <div>
+          <span class="name">한국창업진흥원</span>
+          <span class="code">ADMIN-02</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mock-note">
+  <div class="wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span class="msg">이 화면은 UI 목업입니다. 배정 로직은 PRD 11장 미결정 #5 사항이며, 세 방식을 비교하기 위한 검토용 화면입니다.</span>
+    <nav class="screen-nav" aria-label="목업 화면 이동">
+      <span class="lab">화면 이동</span>
+      <a href="index.html">랜딩</a>
+      <a href="login.html">로그인</a>
+      <a href="judge-dashboard.html">심사위원 목록</a>
+      <a href="application-detail.html">지원서 분석</a>
+      <a href="applicant-result.html">지원자 결과</a>
+      <a href="admin-dashboard.html">운영 대시보드</a>
+      <a href="admin-teams.html">참가팀 관리</a>
+      <a href="admin-assign.html" aria-current="page">심사위원 배정</a>
+    </nav>
+  </div>
+</div>
+
+<main id="main" class="page">
+  <div class="wrap">
+
+    <div class="page-head">
+      <div>
+        <a class="backlink" href="admin-teams.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          참가팀 관리
+        </a>
+        <h1 style="margin-top:6px;">심사위원 배정</h1>
+        <p class="body-m muted">배정이 부족한 12팀에 심사위원을 채웁니다. 팀당 3인이 기본값입니다.</p>
+      </div>
+    </div>
+
+    <!-- ---------- 미결정 안내 ---------- -->
+    <div class="decision">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        배정 방식은 아직 확정되지 않았습니다 (PRD 11장 #5)
+      </h2>
+      <p>
+        수동·자동·병행 중 무엇으로 갈지 정해지지 않아, 세 방식을 모두 담아 두었습니다.
+        아래에서 방식을 바꿔 가며 실제로 배정해 보시고 결정하시면, 그 방식만 남기고 정리하겠습니다.
+      </p>
+    </div>
+
+    <!-- ---------- 배정 방식 ---------- -->
+    <section class="card" aria-labelledby="mode-title">
+      <div class="card-head">
+        <h2 class="h3" id="mode-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+          배정 방식
+        </h2>
+      </div>
+
+      <div class="modes" id="modes">
+        <button class="mode" data-mode="manual" aria-pressed="false">
+          <div class="top"><span class="nm">수동</span></div>
+          <p class="desc">담당자가 팀마다 심사위원을 직접 지정합니다.</p>
+          <p class="tradeoff plus"><b>+</b> 이해관계·전문성을 사람이 판단</p>
+          <p class="tradeoff minus"><b>−</b> 42팀 기준 수 시간 소요, 부하 편중 발생</p>
+        </button>
+
+        <button class="mode" data-mode="auto" aria-pressed="false">
+          <div class="top"><span class="nm">자동</span></div>
+          <p class="desc">분야 매칭과 부하 균등으로 시스템이 일괄 배정합니다.</p>
+          <p class="tradeoff plus"><b>+</b> 즉시 완료, 건수가 고르게 분산됨</p>
+          <p class="tradeoff minus"><b>−</b> 이해관계를 시스템이 알 수 없음</p>
+        </button>
+
+        <button class="mode" data-mode="hybrid" aria-pressed="true">
+          <div class="top"><span class="nm">병행</span><span class="badge badge--brand">권장</span></div>
+          <p class="desc">자동으로 초안을 만들고 담당자가 수정합니다.</p>
+          <p class="tradeoff plus"><b>+</b> 속도와 판단을 모두 확보</p>
+          <p class="tradeoff minus"><b>−</b> 수정 이력 관리가 추가로 필요</p>
+        </button>
+      </div>
+    </section>
+
+    <!-- ---------- 배정 규칙 ---------- -->
+    <section class="card" aria-labelledby="rule-title">
+      <div class="card-head">
+        <h2 class="h3" id="rule-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+          배정 규칙
+        </h2>
+      </div>
+
+      <div class="rules">
+        <div class="rule">
+          <label for="perTeam">팀당 심사위원 수</label>
+          <input type="number" id="perTeam" min="1" max="5" value="3">
+          <p class="hint">점수 편차를 보려면 3인 이상을 권장합니다.</p>
+        </div>
+        <div class="rule">
+          <label for="maxPer">심사위원 1인당 최대 건수</label>
+          <input type="number" id="maxPer" min="1" max="30" value="15">
+          <p class="hint">초과하는 심사위원은 배정 후보에서 제외됩니다.</p>
+        </div>
+        <div class="rule">
+          <label>매칭 옵션</label>
+          <div class="switch-row">
+            <input type="checkbox" id="fieldMatch" checked>
+            <label for="fieldMatch">담당 분야 우선 매칭</label>
+          </div>
+          <p class="hint">해제하면 부하 균등만 고려합니다.</p>
+        </div>
+      </div>
+
+      <div class="run-row">
+        <button class="btn btn--primary btn--sm" id="runBtn">자동 배정 실행</button>
+        <button class="btn btn--ghost btn--sm" id="resetBtn">초기화</button>
+        <span class="result" id="runResult">아직 실행하지 않았습니다.</span>
+      </div>
+    </section>
+
+    <div class="split">
+
+      <!-- ---------- 심사위원 부하 ---------- -->
+      <aside class="col-load" aria-labelledby="load-title">
+        <div class="card">
+          <div class="card-head">
+            <h2 class="h3" id="load-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 16v-5M12 16V8M17 16v-3"/></svg>
+              심사위원 부하
+            </h2>
+            <span class="caption muted">12명</span>
+          </div>
+
+          <div class="load-legend">
+            <span><i class="lg-base" aria-hidden="true"></i> 기존 배정</span>
+            <span><i class="lg-add" aria-hidden="true"></i> 이번 배정</span>
+          </div>
+
+          <div id="loadList"></div>
+
+          <p class="caption muted" style="margin-top:14px;">
+            막대 전체 길이는 1인당 최대 건수 기준입니다.
+          </p>
+        </div>
+      </aside>
+
+      <!-- ---------- 팀별 배정 ---------- -->
+      <section class="card" aria-labelledby="team-title">
+        <div class="card-head">
+          <h2 class="h3" id="team-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            배정이 부족한 팀
+          </h2>
+          <span class="caption muted" aria-live="polite">충족 <strong id="okCount" class="mono">0</strong> / 12</span>
+        </div>
+
+        <div class="table-scroll">
+          <table class="data-table assign-table">
+            <thead>
+              <tr>
+                <th scope="col">팀</th>
+                <th scope="col">분야</th>
+                <th scope="col">배정된 심사위원</th>
+                <th scope="col">충족</th>
+              </tr>
+            </thead>
+            <tbody id="teamBody"></tbody>
+          </table>
+        </div>
+
+        <div class="note-box" style="margin-top:18px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span id="modeHint"></span>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:20px;">
+          <button class="btn btn--primary" id="confirmBtn">배정 확정</button>
+          <button class="btn btn--ghost" id="saveBtn">임시저장</button>
+        </div>
+      </section>
+    </div>
+
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ==========================================================
+     데이터
+     teams: admin-teams.html에서 '배정 부족(3인 미만, 반려 제외)'으로
+            집계되는 12팀과 동일하다.
+     ========================================================== */
+  var JUDGES = [
+    { code: 'JD-2026-014', name: '김유니',  fields: ['농업', '환경'],     base: 12 },
+    { code: 'JD-2026-007', name: '박서준',  fields: ['의료', '복지'],     base: 11 },
+    { code: 'JD-2026-021', name: '이하늘',  fields: ['핀테크', '커머스'], base: 13 },
+    { code: 'JD-2026-033', name: '정민호',  fields: ['제조', '환경'],     base: 10 },
+    { code: 'JD-2026-005', name: '최은영',  fields: ['교육', '복지'],     base: 9 },
+    { code: 'JD-2026-012', name: '한지원',  fields: ['푸드', '커머스'],   base: 8 },
+    { code: 'JD-2026-018', name: '오세훈',  fields: ['물류', '제조'],     base: 10 },
+    { code: 'JD-2026-024', name: '윤가람',  fields: ['농업', '푸드'],     base: 7 },
+    { code: 'JD-2026-029', name: '서준혁',  fields: ['환경', '제조'],     base: 9 },
+    { code: 'JD-2026-002', name: '임수아',  fields: ['교육', '의료'],     base: 8 },
+    { code: 'JD-2026-036', name: '강태민',  fields: ['핀테크', '물류'],   base: 11 },
+    { code: 'JD-2026-041', name: '노현주',  fields: ['복지', '교육'],     base: 6 }
+  ];
+
+  var TEAMS = [
+    { name: '리터니',     field: '물류',   pre: 2 },
+    { name: '워드브릿지', field: '핀테크', pre: 2 },
+    { name: '미들핏',     field: '복지',   pre: 1 },
+    { name: '안심귀가',   field: '복지',   pre: 2 },
+    { name: '빌드셰어',   field: '제조',   pre: 1 },
+    { name: '씨앗상점',   field: '농업',   pre: 2 },
+    { name: '리버스핀',   field: '핀테크', pre: 0 },
+    { name: '북클립',     field: '교육',   pre: 0 },
+    { name: '패브릭투',   field: '제조',   pre: 2 },
+    { name: '런웨이',     field: '커머스', pre: 1 },
+    { name: '그린루프',   field: '환경',   pre: 0 },
+    { name: '미래학당',   field: '교육',   pre: 0 }
+  ];
+
+  var MODES = {
+    manual: { label: '수동', canAuto: false, canEdit: true,
+      hint: '수동 방식에서는 팀마다 심사위원을 직접 지정합니다. 자동 배정 버튼은 비활성화됩니다.' },
+    auto:   { label: '자동', canAuto: true,  canEdit: false,
+      hint: '자동 방식에서는 시스템이 일괄 배정하며 담당자가 개별 수정할 수 없습니다. 이해관계가 있는 조합이 걸러지지 않을 수 있습니다.' },
+    hybrid: { label: '병행', canAuto: true,  canEdit: true,
+      hint: '병행 방식에서는 자동으로 초안을 만든 뒤 담당자가 칩의 ×로 제거하거나 목록에서 추가해 수정합니다. 수정 이력은 감사로그에 남습니다.' }
+  };
+
+  var mode = 'hybrid';
+  /* teams[i].assigned = 이번에 배정된 심사위원 code 배열 */
+  var state = TEAMS.map(function (t) { return { team: t, assigned: [] }; });
+
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+  var byCode = function (code) {
+    for (var i = 0; i < JUDGES.length; i++) if (JUDGES[i].code === code) return JUDGES[i];
+    return null;
+  };
+
+  var toastEl = $('#toast'), toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('is-on'); }, 2800);
+  }
+
+  var perTeam = function () { return Math.max(1, parseInt($('#perTeam').value, 10) || 3); };
+  var maxPer  = function () { return Math.max(1, parseInt($('#maxPer').value, 10) || 15); };
+
+  /* 이번 배정으로 심사위원이 추가로 맡은 건수 */
+  function addedFor(code) {
+    return state.reduce(function (n, s) { return n + (s.assigned.indexOf(code) !== -1 ? 1 : 0); }, 0);
+  }
+  function loadOf(code) { return byCode(code).base + addedFor(code); }
+
+  /* ==========================================================
+     자동 배정 — 분야 매칭 우선, 그 안에서 부하가 적은 순
+     ========================================================== */
+  function autoAssign() {
+    var need = perTeam(), cap = maxPer(), useField = $('#fieldMatch').checked;
+    var filled = 0, mismatch = 0, failed = 0;
+
+    /* 부족분이 큰 팀부터 채워 잔여 슬롯이 남지 않게 한다 */
+    var order = state.slice().sort(function (a, b) {
+      return (need - b.team.pre - b.assigned.length) - (need - a.team.pre - a.assigned.length);
+    });
+
+    order.forEach(function (s) {
+      var want = need - s.team.pre - s.assigned.length;
+
+      while (want > 0) {
+        var pool = JUDGES.filter(function (j) {
+          if (s.assigned.indexOf(j.code) !== -1) return false;
+          return loadOf(j.code) < cap;
+        });
+        if (!pool.length) { failed += want; break; }
+
+        var matched = useField
+          ? pool.filter(function (j) { return j.fields.indexOf(s.team.field) !== -1; })
+          : [];
+        var pick = (matched.length ? matched : pool).sort(function (a, b) {
+          return loadOf(a.code) - loadOf(b.code);
+        })[0];
+
+        if (useField && !matched.length) mismatch++;
+        s.assigned.push(pick.code);
+        filled++;
+        want--;
+      }
+    });
+
+    var msg = '심사위원 ' + filled + '명을 배정했습니다.';
+    if (mismatch) msg += ' 분야가 맞는 심사위원이 부족해 ' + mismatch + '건은 다른 분야로 배정했습니다.';
+    if (failed) msg += ' 최대 건수 제한으로 ' + failed + '건은 배정하지 못했습니다.';
+    $('#runResult').innerHTML = '배정 <strong>' + filled + '</strong>건' +
+      (mismatch ? ' · 분야 불일치 <strong>' + mismatch + '</strong>건' : '') +
+      (failed ? ' · 미배정 <strong>' + failed + '</strong>건' : '');
+    toast(msg);
+    render();
+  }
+
+  /* ==========================================================
+     렌더
+     ========================================================== */
+  function render() {
+    var need = perTeam(), cap = maxPer(), editable = MODES[mode].canEdit;
+
+    /* --- 심사위원 부하 --- */
+    $('#loadList').innerHTML = JUDGES.map(function (j) {
+      var add = addedFor(j.code);
+      var basePct = Math.min(100, (j.base / cap) * 100);
+      var addPct  = Math.min(100 - basePct, (add / cap) * 100);
+      return '<div class="judge-row' + (add ? ' is-new' : '') + '">' +
+        '<div class="judge-top">' +
+          '<span class="nm">' + esc(j.name) + '</span>' +
+          '<span class="fld">' + esc(j.fields.join(' · ')) + '</span>' +
+          '<span class="cnt">' + (j.base + add) + ' / ' + cap + (add ? ' (+' + add + ')' : '') + '</span>' +
+        '</div>' +
+        '<div class="load" role="img" aria-label="' + esc(j.name) + ' 기존 ' + j.base + '건, 이번 배정 ' + add + '건, 최대 ' + cap + '건">' +
+          '<span class="base" style="width:' + basePct.toFixed(1) + '%"></span>' +
+          '<span class="add" style="width:' + addPct.toFixed(1) + '%"></span>' +
+        '</div></div>';
+    }).join('');
+
+    /* --- 팀별 배정 --- */
+    var ok = 0;
+    $('#teamBody').innerHTML = state.map(function (s, idx) {
+      var total = s.team.pre + s.assigned.length;
+      var isOk = total >= need;
+      if (isOk) ok++;
+
+      var chips = s.assigned.map(function (code) {
+        var j = byCode(code);
+        var mism = j.fields.indexOf(s.team.field) === -1;
+        return '<span class="chip-j is-new' + (mism ? ' is-mismatch' : '') + '"' +
+          (mism ? ' title="담당 분야가 다릅니다"' : '') + '>' + esc(j.name) +
+          '<button class="rm" data-rm="' + idx + '" data-code="' + code + '" ' +
+          'aria-label="' + esc(j.name) + ' 배정 해제"' + (editable ? '' : ' hidden') + '>' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
+          '</button></span>';
+      }).join('');
+
+      var addSel = '';
+      if (editable && !isOk) {
+        var opts = JUDGES.filter(function (j) {
+          return s.assigned.indexOf(j.code) === -1 && loadOf(j.code) < cap;
+        }).sort(function (a, b) {
+          var am = a.fields.indexOf(s.team.field) !== -1, bm = b.fields.indexOf(s.team.field) !== -1;
+          if (am !== bm) return am ? -1 : 1;
+          return loadOf(a.code) - loadOf(b.code);
+        }).map(function (j) {
+          var m = j.fields.indexOf(s.team.field) !== -1;
+          return '<option value="' + j.code + '">' + esc(j.name) + (m ? ' · 분야 일치' : '') +
+                 ' (' + loadOf(j.code) + '건)</option>';
+        }).join('');
+        addSel = '<select class="select add-sel" data-add="' + idx + '" aria-label="' + esc(s.team.name) + ' 심사위원 추가">' +
+                 '<option value="">+ 추가</option>' + opts + '</select>';
+      }
+
+      return '<tr>' +
+        '<th scope="row" class="who">' + esc(s.team.name) +
+          '<span class="caption muted" style="display:block;font-weight:500">기존 ' + s.team.pre + '인</span></th>' +
+        '<td class="nowrap">' + esc(s.team.field) + '</td>' +
+        '<td><div class="chips">' + (chips || '<span class="caption muted">미배정</span>') + addSel + '</div></td>' +
+        '<td><span class="need ' + (isOk ? 'ok' : 'short') + '">' + total + ' / ' + need + '</span></td>' +
+      '</tr>';
+    }).join('');
+
+    $('#okCount').textContent = ok;
+    $('#runBtn').disabled = !MODES[mode].canAuto;
+    $('#modeHint').textContent = MODES[mode].hint;
+  }
+
+  /* ==========================================================
+     이벤트
+     ========================================================== */
+  Array.prototype.slice.call(document.querySelectorAll('.mode')).forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.mode').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
+      mode = btn.dataset.mode;
+      toast(MODES[mode].label + ' 방식으로 전환했습니다.');
+      render();
+    });
+  });
+
+  $('#runBtn').addEventListener('click', autoAssign);
+
+  $('#resetBtn').addEventListener('click', function () {
+    state.forEach(function (s) { s.assigned = []; });
+    $('#runResult').textContent = '아직 실행하지 않았습니다.';
+    toast('배정을 초기화했습니다.');
+    render();
+  });
+
+  $('#teamBody').addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-rm]');
+    if (!rm) return;
+    var s = state[+rm.dataset.rm];
+    var i = s.assigned.indexOf(rm.dataset.code);
+    if (i !== -1) {
+      s.assigned.splice(i, 1);
+      toast(byCode(rm.dataset.code).name + ' 배정을 해제했습니다.');
+      render();
+    }
+  });
+
+  $('#teamBody').addEventListener('change', function (e) {
+    var sel = e.target.closest('[data-add]');
+    if (!sel || !sel.value) return;
+    var s = state[+sel.dataset.add];
+    s.assigned.push(sel.value);
+    toast(byCode(sel.value).name + '을(를) ' + s.team.name + '에 배정했습니다.');
+    render();
+  });
+
+  ['perTeam', 'maxPer'].forEach(function (id) {
+    $('#' + id).addEventListener('input', render);
+  });
+  $('#fieldMatch').addEventListener('change', render);
+
+  $('#saveBtn').addEventListener('click', function () {
+    toast('임시저장했습니다. (목업 — 실제 저장되지 않습니다)');
+  });
+
+  $('#confirmBtn').addEventListener('click', function () {
+    var need = perTeam();
+    var short = state.filter(function (s) { return s.team.pre + s.assigned.length < need; });
+    if (short.length) {
+      toast(short.length + '개 팀이 아직 ' + need + '인을 채우지 못했습니다.');
+      return;
+    }
+    toast('배정을 확정했습니다. 심사위원에게 알림이 발송됩니다. (목업)');
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>

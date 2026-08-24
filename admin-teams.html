@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>참가팀 관리 — JudiX</title>
+<meta name="description" content="운영기관이 전체 참가팀과 지원서 상태를 관리하는 화면.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap">
+
+<link rel="stylesheet" href="assets/judix.css">
+
+<style>
+/* ---- 참가팀 관리 전용 ---- */
+body { background: var(--gray-50); }
+
+.page { padding: 32px 0 80px; }
+.page-head { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+.page-head h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+.head-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* KPI */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+.kpi { display: flex; align-items: center; gap: 16px; }
+.kpi .chip { flex: none; width: 52px; height: 52px; border-radius: 50%; background: var(--primary-100); color: var(--primary-900); display: grid; place-items: center; }
+.kpi .num { font-family: var(--font-mono); font-size: var(--fs-stat); line-height: var(--lh-stat); font-weight: 700; display: block; color: var(--text-900); }
+.kpi .label { font-size: var(--fs-body-m); color: var(--text-500); font-weight: 500; }
+
+/* 필터 */
+.toolbar { display: flex; flex-wrap: wrap; gap: 14px; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.tab {
+  min-height: 44px; padding: 0 16px; cursor: pointer;
+  border: 1px solid var(--gray-200); background: var(--white); border-radius: var(--radius-pill);
+  font-size: var(--fs-body-m); font-weight: 600; color: var(--text-900);
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+.tab:hover { border-color: var(--primary-700); }
+.tab[aria-selected="true"] { background: var(--primary-900); border-color: var(--primary-900); color: var(--white); }
+.tab .cnt { font-family: var(--font-mono); font-size: var(--fs-caption); opacity: .85; }
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.search { position: relative; }
+.search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-500); pointer-events: none; }
+.search input { width: 240px; padding-left: 42px; }
+.search input:focus { padding-left: 41px; }
+
+/* 표 */
+.table-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; }
+.table-card .table-scroll { border: 0; border-radius: 0; }
+.teams-table { min-width: 960px; }
+.teams-table tbody tr:hover { background: var(--primary-100); }
+.t-name { font-size: var(--fs-body-l); font-weight: 600; color: var(--primary-900); margin-bottom: 2px; }
+.t-desc { font-size: var(--fs-caption); color: var(--text-500); }
+.t-no { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-500); white-space: nowrap; }
+.nowrap { white-space: nowrap; }
+
+/* 배정 현황 미니 표시 */
+.assign { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.pips { display: inline-flex; gap: 3px; }
+.pip { width: 9px; height: 9px; border-radius: 50%; background: var(--gray-200); }
+.pip.on { background: var(--primary-900); }
+.assign .txt { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-500); }
+.assign.short .txt { color: var(--danger); font-weight: 700; }
+
+.empty { display: none; padding: 64px 24px; text-align: center; color: var(--text-500); }
+.empty svg { margin: 0 auto 16px; color: var(--gray-200); }
+.list-foot { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid var(--gray-200); }
+.list-foot .count { font-size: var(--fs-body-m); color: var(--text-500); }
+.list-foot .count strong { color: var(--text-900); font-family: var(--font-mono); }
+
+@media (max-width: 1024px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+  .search, .search input { width: 100%; }
+  .filters { width: 100%; }
+  .page-head { align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
+
+<header class="app-header">
+  <div class="wrap">
+    <a class="logo" href="index.html">
+      <span class="logo-mark" aria-hidden="true">J</span>
+      <span>JudiX</span>
+    </a>
+    <span class="header-divider" aria-hidden="true"></span>
+    <select class="select" aria-label="대회 선택">
+      <option>2026 청년 창업경진대회 · 본선</option>
+      <option>2026 청년 창업경진대회 · 예선</option>
+    </select>
+
+    <div class="header-right">
+      <span class="badge badge--brand">운영기관</span>
+      <div class="user-chip">
+        <span class="user-avatar" aria-hidden="true">운</span>
+        <div>
+          <span class="name">한국창업진흥원</span>
+          <span class="code">ADMIN-02</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mock-note">
+  <div class="wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span class="msg">이 화면은 UI 목업입니다. 참가팀 42곳은 모두 예시 데이터입니다. (PRD 6.3 · Phase 2)</span>
+    <nav class="screen-nav" aria-label="목업 화면 이동">
+      <span class="lab">화면 이동</span>
+      <a href="index.html">랜딩</a>
+      <a href="login.html">로그인</a>
+      <a href="judge-dashboard.html">심사위원 목록</a>
+      <a href="application-detail.html">지원서 분석</a>
+      <a href="applicant-result.html">지원자 결과</a>
+      <a href="admin-dashboard.html">운영 대시보드</a>
+      <a href="admin-teams.html" aria-current="page">참가팀 관리</a>
+      <a href="admin-assign.html">심사위원 배정</a>
+    </nav>
+  </div>
+</div>
+
+<main id="main" class="page">
+  <div class="wrap">
+
+    <div class="page-head">
+      <div>
+        <a class="backlink" href="admin-dashboard.html">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+          운영 대시보드
+        </a>
+        <h1 style="margin-top:6px;">참가팀 관리</h1>
+        <p class="body-m muted">전체 참가팀의 지원서 상태와 심사위원 배정 현황을 확인합니다.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn btn--ghost btn--sm" data-todo="CSV 내보내기">CSV 내보내기</button>
+        <a class="btn btn--primary btn--sm" href="admin-assign.html">심사위원 배정</a>
+      </div>
+    </div>
+
+    <section class="kpi-grid" aria-label="참가팀 요약">
+      <div class="card kpi">
+        <span class="chip" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>
+        </span>
+        <div><span class="num" id="kTotal">42</span><span class="label">전체 참가팀</span></div>
+      </div>
+      <div class="card kpi">
+        <span class="chip" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </span>
+        <div><span class="num" id="kDoing">0</span><span class="label">심사 진행중</span></div>
+      </div>
+      <div class="card kpi">
+        <span class="chip" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </span>
+        <div><span class="num" id="kDone">0</span><span class="label">심사 완료</span></div>
+      </div>
+      <div class="card kpi">
+        <span class="chip" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        </span>
+        <div><span class="num" id="kShort">0</span><span class="label">배정 부족 (3인 미만)</span></div>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <div class="tabs" role="tablist" aria-label="지원서 상태 필터">
+        <button class="tab" role="tab" aria-selected="true"  data-filter="all">전체 <span class="cnt" data-cnt="all">42</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-filter="접수완료">접수완료 <span class="cnt" data-cnt="접수완료">0</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-filter="심사중">심사중 <span class="cnt" data-cnt="심사중">0</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-filter="심사완료">심사완료 <span class="cnt" data-cnt="심사완료">0</span></button>
+        <button class="tab" role="tab" aria-selected="false" data-filter="반려">반려 <span class="cnt" data-cnt="반려">0</span></button>
+      </div>
+
+      <div class="filters">
+        <select class="select" id="fieldFilter" aria-label="분야 필터"></select>
+        <div class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="search" id="q" placeholder="팀명 · 지원번호 검색" aria-label="팀명 또는 지원번호로 검색">
+        </div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-scroll">
+        <table class="data-table teams-table">
+          <thead>
+            <tr>
+              <th scope="col">팀 / 아이디어</th>
+              <th scope="col">분야</th>
+              <th scope="col">제출일</th>
+              <th scope="col">심사위원 배정</th>
+              <th scope="col">상태</th>
+              <th scope="col" class="nowrap">작업</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="empty" id="empty">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <p class="body-m">조건에 맞는 참가팀이 없습니다.</p>
+      </div>
+
+      <div class="list-foot">
+        <span class="count" aria-live="polite">전체 <strong id="allCount">42</strong>팀 중 <strong id="shownCount">42</strong>팀 표시</span>
+        <span class="caption muted">상태 변경 이력은 감사로그(AuditLog)에 기록됩니다</span>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ==========================================================
+     참가팀 데이터 — [팀명, 아이디어, 분야, 제출일, 배정인원, 상태]
+     심사위원 대시보드에 등장하는 12팀은 동일한 분야·설명을 사용한다.
+     ========================================================== */
+  var RAW = [
+    ['에코백','폐현수막 업사이클 리빙 브랜드','환경','08-09',3,'심사중'],
+    ['필드로그','노지 작물 생육 데이터 수집·예측','농업','08-11',3,'심사중'],
+    ['닥터나우케어','만성질환자 복약 관리 앱','의료','08-08',3,'심사완료'],
+    ['리버스랩','폐배터리 리튬 회수 공정','제조','08-10',3,'심사중'],
+    ['모두의노트','시각장애 학생 학습자료 변환','교육','08-07',3,'심사완료'],
+    ['스텝바이','도심 라스트마일 배송 최적화','물류','08-12',3,'심사중'],
+    ['케어링크','독거노인 생활 이상징후 감지','복지','08-06',3,'심사완료'],
+    ['브릿지핀','소상공인 매출 기반 신용평가','핀테크','08-11',3,'심사중'],
+    ['플랜트원','대체육 원료 B2B 소싱','푸드','08-05',3,'심사완료'],
+    ['오션가드','해양 부유 쓰레기 수거 드론','환경','08-12',3,'심사중'],
+    ['리터니','반품 물류 재고 재유통 중개','물류','08-13',2,'심사중'],
+    ['사운드핏','청각 보조기기 개인화 피팅','의료','08-04',3,'심사완료'],
+    ['그루터기','도시 유휴부지 스마트팜','농업','08-09',3,'심사중'],
+    ['핏메이트','재활 운동 자세 교정 AI','의료','08-10',3,'심사중'],
+    ['클린셀','반도체 세정액 재생 기술','제조','08-08',3,'심사완료'],
+    ['워드브릿지','다국어 계약서 검토 보조','핀테크','08-14',2,'접수완료'],
+    ['소일케어','토양 산성도 실시간 진단','농업','08-13',3,'심사중'],
+    ['하루한장','고령자 대상 디지털 문해 교육','교육','08-07',3,'심사완료'],
+    ['배터리팜','전기차 폐배터리 ESS 전환','제조','08-11',3,'심사중'],
+    ['미들핏','중년 여성 맞춤 운동 커뮤니티','복지','08-15',1,'접수완료'],
+    ['탄소노트','중소기업 탄소배출량 자동 산정','환경','08-06',3,'심사완료'],
+    ['키친로그','외식업 식자재 발주 예측','푸드','08-12',3,'심사중'],
+    ['안심귀가','야간 이동 경로 안전도 안내','복지','08-14',2,'접수완료'],
+    ['페어웨어','중고 의류 상태 자동 등급화','커머스','08-10',3,'심사중'],
+    ['닥터펫','반려동물 피부질환 이미지 판독','의료','08-09',3,'심사중'],
+    ['빌드셰어','건설 자재 잉여분 거래','제조','08-15',1,'접수완료'],
+    ['모두의길','휠체어 접근 가능 경로 지도','복지','08-05',3,'심사완료'],
+    ['씨앗상점','토종 종자 유통 플랫폼','농업','08-13',2,'심사중'],
+    ['리버스핀','폐금속 스크랩 가격 예측','핀테크','08-16',0,'접수완료'],
+    ['헬로잡','경력단절 여성 재취업 매칭','복지','08-08',3,'심사완료'],
+    ['쿨체인','신선식품 콜드체인 온도 추적','물류','08-11',3,'심사중'],
+    ['북클립','독서 기록 기반 도서 추천','교육','08-16',0,'접수완료'],
+    ['에어윈','실내 공기질 예측 환기 제어','환경','08-07',3,'심사완료'],
+    ['패브릭투','폐섬유 재생 원단 생산','제조','08-14',2,'접수완료'],
+    ['잇츠밀','1인가구 소포장 반찬 정기배송','푸드','08-12',3,'심사중'],
+    ['세이프넷','산업현장 위험행동 영상 감지','제조','08-06',3,'심사완료'],
+    ['런웨이','지역 소상공인 라이브커머스','커머스','08-15',1,'접수완료'],
+    ['맘스노트','산후우울 자가진단 및 연계','복지','08-09',3,'심사중'],
+    ['그린루프','건물 옥상 녹화 시공 중개','환경','08-17',0,'접수완료'],
+    ['테이블핏','식당 좌석 회전율 분석','푸드','08-10',3,'심사중'],
+    ['미래학당','농어촌 학생 온라인 튜터링','교육','08-16',0,'접수완료'],
+    ['드림코드','발달장애인 코딩 교육 커리큘럼','교육','08-18',0,'반려']
+  ];
+
+  var STATUS_BADGE = {
+    '접수완료': 'badge--neutral',
+    '심사중':   'badge--brand',
+    '심사완료': 'badge--ok',
+    '반려':     'badge--risk'
+  };
+  var NEED = 3;   /* 팀당 필요한 심사위원 수 */
+
+  var teams = RAW.map(function (r, i) {
+    return {
+      no: 'A-2026-' + String(i + 1).padStart(4, '0'),
+      name: r[0], desc: r[1], field: r[2],
+      date: '2026-' + r[3], assigned: r[4], status: r[5]
+    };
+  });
+
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+
+  var toastEl = $('#toast'), toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('is-on'); }, 2800);
+  }
+
+  /* ---------- KPI · 탭 카운트 (데이터에서 직접 산출) ---------- */
+  function counts() {
+    var c = { all: teams.length, '접수완료': 0, '심사중': 0, '심사완료': 0, '반려': 0 };
+    teams.forEach(function (t) { c[t.status]++; });
+    return c;
+  }
+  var c = counts();
+  $('#kTotal').textContent = teams.length;
+  $('#kDoing').textContent = c['심사중'];
+  $('#kDone').textContent = c['심사완료'];
+  $('#kShort').textContent = teams.filter(function (t) {
+    return t.status !== '반려' && t.assigned < NEED;
+  }).length;
+  $('#allCount').textContent = teams.length;
+  Object.keys(c).forEach(function (k) {
+    var el = document.querySelector('[data-cnt="' + k + '"]');
+    if (el) el.textContent = c[k];
+  });
+
+  /* ---------- 분야 필터 옵션 ---------- */
+  var fields = teams.map(function (t) { return t.field; })
+    .filter(function (v, i, a) { return a.indexOf(v) === i; }).sort();
+  $('#fieldFilter').innerHTML =
+    '<option value="">전체 분야</option>' +
+    fields.map(function (f) { return '<option value="' + esc(f) + '">' + esc(f) + '</option>'; }).join('');
+
+  /* ---------- 표 렌더 ---------- */
+  var filter = 'all';
+  var tbody = $('#tbody');
+
+  function pips(n) {
+    var out = '';
+    for (var i = 0; i < NEED; i++) out += '<span class="pip' + (i < n ? ' on' : '') + '"></span>';
+    return out;
+  }
+
+  function render() {
+    var q = $('#q').value.trim().toLowerCase();
+    var fld = $('#fieldFilter').value;
+
+    var rows = teams.filter(function (t) {
+      if (filter !== 'all' && t.status !== filter) return false;
+      if (fld && t.field !== fld) return false;
+      if (q && (t.name + ' ' + t.no + ' ' + t.desc).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+
+    tbody.innerHTML = rows.map(function (t) {
+      var short = t.status !== '반려' && t.assigned < NEED;
+      return '<tr>' +
+        '<th scope="row"><div class="t-name">' + esc(t.name) + '</div>' +
+          '<div class="t-desc">' + esc(t.desc) + '</div>' +
+          '<div class="t-no">' + t.no + '</div></th>' +
+        '<td class="nowrap">' + esc(t.field) + '</td>' +
+        '<td class="t-no">' + t.date + '</td>' +
+        '<td><span class="assign' + (short ? ' short' : '') + '">' +
+          '<span class="pips" aria-hidden="true">' + pips(t.assigned) + '</span>' +
+          '<span class="txt">' + t.assigned + '/' + NEED + (short ? ' 부족' : '') + '</span></span></td>' +
+        '<td><span class="badge ' + STATUS_BADGE[t.status] + '">' + t.status + '</span></td>' +
+        '<td class="nowrap">' + (t.name === '필드로그'
+          ? '<a class="btn btn--ghost btn--sm" href="application-detail.html">분석 보기</a>'
+          : '<button class="btn btn--ghost btn--sm" data-todo="' + esc(t.name) + ' 분석">분석 보기</button>') +
+        '</td></tr>';
+    }).join('');
+
+    $('#shownCount').textContent = rows.length;
+    $('#empty').style.display = rows.length ? 'none' : 'block';
+  }
+
+  Array.prototype.slice.call(document.querySelectorAll('.tab')).forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (t) {
+        t.setAttribute('aria-selected', String(t === tab));
+      });
+      filter = tab.dataset.filter;
+      render();
+    });
+  });
+  $('#q').addEventListener('input', render);
+  $('#fieldFilter').addEventListener('change', render);
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-todo]');
+    if (btn) toast('"' + btn.dataset.todo + '" 화면은 아직 목업이 없습니다. 필드로그 팀에서 확인해 보세요.');
+  });
+
+  render();
+})();
+</script>
+
+</body>
+</html>
