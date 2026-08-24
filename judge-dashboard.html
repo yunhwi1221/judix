@@ -11,200 +11,28 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap">
 
+<link rel="stylesheet" href="assets/judix.css">
+
 <style>
-/* ============================================================
-   심사비서(JudiX) 디자인 토큰 — 디자인가이드 v0.1 (2·3장)
-   index.html 과 동일한 블록. 모든 화면이 이 값을 공유합니다.
-   ============================================================ */
-:root {
-  --primary-950: #2E0140;
-  --primary-900: #4D026A;
-  --primary-700: #7A1C99;
-  --primary-100: #F1E4F7;
+/* ---- 심사위원 대시보드 전용 ---- */
+body { background: var(--gray-50); }
 
-  --accent-600: #B8850C;
-  --accent-500: #F5B700;
-  --accent-300: #FBD65C;
-  --accent-100: #FDF0C9;
-
-  --cream-bg: #F7F2E8;
-  --white:    #FFFFFF;
-  --gray-50:  #F4F2F5;
-  --gray-200: #E4DEE8;
-  --text-900: #231A2B;
-  --text-500: #6B6270;
-
-  --success: #1E8E5A;
-  --warning: #B8850C;
-  --danger:  #C4324B;
-  --info:    #3B5BA5;
-
-  --success-bg: #E3F3EB;
-  --danger-bg:  #FAE9EC;
-  --info-bg:    #E8EDF7;
-
-  --on-dark-muted: #CFC3D6;
-
-  --font-sans: "Pretendard Variable", Pretendard, Inter, -apple-system,
-               BlinkMacSystemFont, "Malgun Gothic", "맑은 고딕", sans-serif;
-  --font-mono: "JetBrains Mono", "Roboto Mono", Consolas, monospace;
-
-  --fs-h1: 30px;       --lh-h1: 1.3;
-  --fs-h2: 24px;       --lh-h2: 1.3;
-  --fs-h3: 19px;       --lh-h3: 1.4;
-  --fs-body-l: 17px;   --lh-body: 1.6;
-  --fs-body-m: 15px;
-  --fs-caption: 13px;  --lh-caption: 1.5;
-  --fs-stat: 40px;     --lh-stat: 1.1;
-
-  --radius-card: 16px;
-  --radius-pill: 999px;
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --header-h: 68px;
-}
-
-/* ---------- reset ---------- */
-*, *::before, *::after { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: var(--fs-body-l);
-  line-height: var(--lh-body);
-  color: var(--text-900);
-  background: var(--gray-50);
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
-h1, h2, h3, p, ul, figure { margin: 0; }
-ul { padding: 0; list-style: none; }
-a { color: inherit; }
-svg { display: block; }
-button { font: inherit; }
-table { border-collapse: collapse; }
-
-.wrap { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 24px; }
-.h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; letter-spacing: -0.01em; }
-.h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 600; }
-.body-m { font-size: var(--fs-body-m); line-height: var(--lh-body); }
-.caption { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: 500; }
-.muted { color: var(--text-500); }
-.mono { font-family: var(--font-mono); }
-
-.skip-link {
-  position: absolute; left: -9999px; top: 0; z-index: 100;
-  background: var(--primary-900); color: var(--white);
-  padding: 12px 20px; border-radius: 0 0 8px 0; font-weight: 600;
-}
-.skip-link:focus { left: 0; }
-:focus-visible { outline: 3px solid var(--primary-700); outline-offset: 2px; }
-
-/* ---------- 5장. 버튼 ---------- */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 48px; padding: 0 24px;
-  border-radius: var(--radius-pill);
-  font-size: var(--fs-body-l); font-weight: 600;
-  text-decoration: none; cursor: pointer; border: 1.5px solid transparent;
-  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
-  white-space: nowrap;
-}
-.btn--primary { background: var(--primary-900); color: var(--white); }
-.btn--primary:hover { background: var(--primary-700); }
-.btn--secondary { background: var(--white); color: var(--primary-900); border-color: var(--primary-900); }
-.btn--secondary:hover { background: var(--primary-100); }
-.btn--ghost { background: transparent; color: var(--text-900); border-color: var(--gray-200); }
-.btn--ghost:hover { background: var(--gray-50); border-color: var(--primary-700); }
-.btn--sm { min-height: 44px; padding: 0 18px; font-size: var(--fs-body-m); }
-
-/* ---------- 5장. 배지 (상태 점 + 텍스트 라벨 병행) ---------- */
-.badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: var(--fs-caption); line-height: 1; font-weight: 600;
-  padding: 7px 11px; border-radius: var(--radius-pill);
-  background: var(--accent-100); color: var(--accent-600);
-  white-space: nowrap;
-}
-.badge::before { content: "●"; font-size: 9px; }
-.badge--purple  { background: var(--primary-100); color: var(--primary-900); }
-.badge--success { background: var(--success-bg); color: var(--success); }
-.badge--danger  { background: var(--danger-bg);  color: var(--danger); }
-.badge--info    { background: var(--info-bg);    color: var(--info); }
-.badge--neutral { background: var(--gray-50); color: var(--text-500); border: 1px solid var(--gray-200); }
-.badge--plain::before { content: none; }
-
-/* ---------- 5장. 카드 ---------- */
-.card {
-  background: var(--white);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
-  padding: 24px;
-}
-
-/* ============================================================
-   앱 헤더
-   ============================================================ */
-.app-header {
-  position: sticky; top: 0; z-index: 50;
-  height: var(--header-h);
-  background: var(--white);
-  border-bottom: 1px solid var(--gray-200);
-}
-.app-header .wrap { height: 100%; display: flex; align-items: center; gap: 20px; }
-.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: var(--fs-h3); text-decoration: none; letter-spacing: -0.01em; }
-.logo-mark {
-  width: 32px; height: 32px; border-radius: 9px;
-  background: var(--primary-900); color: var(--white);
-  display: grid; place-items: center; font-size: 17px; font-weight: 700;
-}
-.header-divider { width: 1px; height: 28px; background: var(--gray-200); }
-.contest-select {
-  min-height: 44px; padding: 0 36px 0 14px;
-  border: 1px solid var(--gray-200); border-radius: 10px;
-  background: var(--white) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B6270' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
-  font-size: var(--fs-body-m); font-weight: 600; color: var(--text-900);
-  appearance: none; cursor: pointer;
-}
-.contest-select:focus { border-color: var(--primary-700); border-width: 2px; outline: none; }
-.header-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
-.judge-chip { display: flex; align-items: center; gap: 10px; }
-.judge-avatar {
-  width: 38px; height: 38px; border-radius: 50%;
-  background: var(--primary-100); color: var(--primary-900);
-  display: grid; place-items: center; font-weight: 700; font-size: var(--fs-body-m);
-}
-.judge-chip .name { font-size: var(--fs-body-m); font-weight: 600; line-height: 1.3; }
-.judge-chip .code { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-500); }
-
-/* ============================================================
-   샘플 데이터 고지 (PRD 8장 — 근거 없는 수치 노출 금지)
-   ============================================================ */
-.mock-note {
-  background: var(--primary-950); color: var(--on-dark-muted);
-  font-size: var(--fs-caption); font-weight: 500;
-}
-.mock-note .wrap { display: flex; align-items: center; gap: 10px; padding-top: 11px; padding-bottom: 11px; }
-.mock-note svg { flex: none; color: var(--accent-300); }
-.mock-note a { color: var(--white); font-weight: 600; margin-left: auto; white-space: nowrap; }
-
-/* ============================================================
-   페이지 헤드
-   ============================================================ */
 .page { padding: 36px 0 72px; }
 .page-head { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: flex-end; margin-bottom: 28px; }
 .page-head h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+
+/* 마감 안내 — 골드는 좌측 테두리와 숫자에만 */
 .deadline {
   display: flex; align-items: center; gap: 12px;
-  background: var(--accent-100); border: 1px solid var(--accent-500);
-  border-radius: 12px; padding: 12px 18px;
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-left: 3px solid var(--accent-500);
+  border-radius: 0 12px 12px 0; padding: 12px 18px;
 }
 .deadline .dday { font-family: var(--font-mono); font-size: var(--fs-h3); font-weight: 700; color: var(--accent-600); }
 .deadline .txt { font-size: var(--fs-body-m); font-weight: 600; }
 .deadline .txt span { display: block; font-size: var(--fs-caption); font-weight: 500; color: var(--text-500); }
 
-/* ============================================================
-   KPI 요약 카드 (패턴 4-2 변형)
-   ============================================================ */
+/* KPI — 칩과 숫자 색을 한 가지로 통일 */
 .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 28px; }
 .kpi { display: flex; align-items: center; gap: 16px; }
 .kpi .chip {
@@ -212,12 +40,8 @@ table { border-collapse: collapse; }
   background: var(--primary-100); color: var(--primary-900);
   display: grid; place-items: center;
 }
-.kpi .num { font-family: var(--font-mono); font-size: var(--fs-stat); line-height: var(--lh-stat); font-weight: 700; display: block; }
+.kpi .num { font-family: var(--font-mono); font-size: var(--fs-stat); line-height: var(--lh-stat); font-weight: 700; display: block; color: var(--text-900); }
 .kpi .label { font-size: var(--fs-body-m); color: var(--text-500); font-weight: 500; }
-.kpi--done .chip { background: var(--success-bg); color: var(--success); }
-.kpi--done .num { color: var(--success); }
-.kpi--left .chip { background: var(--info-bg); color: var(--info); }
-.kpi--left .num { color: var(--info); }
 
 /* 진행률 */
 .progress-card { margin-bottom: 28px; }
@@ -226,9 +50,7 @@ table { border-collapse: collapse; }
 .progress-bar { height: 12px; border-radius: var(--radius-pill); background: var(--gray-50); border: 1px solid var(--gray-200); overflow: hidden; }
 .progress-fill { height: 100%; background: var(--primary-900); border-radius: var(--radius-pill); }
 
-/* ============================================================
-   필터 바
-   ============================================================ */
+/* 필터 바 */
 .toolbar { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .tabs { display: flex; flex-wrap: wrap; gap: 8px; }
 .tab {
@@ -245,19 +67,12 @@ table { border-collapse: collapse; }
 
 .search { position: relative; }
 .search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-500); pointer-events: none; }
-.search input {
-  min-height: 44px; width: 280px; padding: 0 14px 0 42px;
-  border: 1px solid var(--gray-200); border-radius: 10px;
-  font-family: inherit; font-size: var(--fs-body-m); color: var(--text-900); background: var(--white);
-}
-.search input:focus { border-color: var(--primary-700); border-width: 2px; outline: none; padding-left: 41px; }
-.search input::placeholder { color: var(--text-500); }
+.search input { width: 280px; padding-left: 42px; }
+.search input:focus { padding-left: 41px; }
 
-/* ============================================================
-   목록 표 (5장 표 규칙)
-   ============================================================ */
+/* 목록 표 */
 .table-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-card); box-shadow: var(--shadow-card); overflow: hidden; }
-.table-scroll { overflow-x: auto; }
+.table-scroll { overflow-x: auto; border: 0; border-radius: 0; }
 .list-table { width: 100%; min-width: 1020px; font-size: var(--fs-body-m); }
 .list-table th, .list-table td { padding: 16px 20px; text-align: left; vertical-align: middle; }
 .list-table thead th { background: var(--primary-900); color: var(--white); font-weight: 600; font-size: var(--fs-body-m); white-space: nowrap; }
@@ -274,50 +89,23 @@ table { border-collapse: collapse; }
 
 .empty { display: none; padding: 64px 24px; text-align: center; color: var(--text-500); }
 .empty svg { margin: 0 auto 16px; color: var(--gray-200); }
-
 .list-foot { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; padding: 16px 20px; border-top: 1px solid var(--gray-200); background: var(--white); }
 .list-foot .count { font-size: var(--fs-body-m); color: var(--text-500); }
 .list-foot .count strong { color: var(--text-900); font-family: var(--font-mono); }
 
-/* ============================================================
-   안내 카드 (패턴 4-6)
-   ============================================================ */
+/* 안내 카드 */
 .notice { display: flex; gap: 16px; align-items: flex-start; margin-top: 28px; }
-.notice-icon { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--info-bg); color: var(--info); display: grid; place-items: center; }
+.notice-icon { flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--gray-50); color: var(--primary-700); display: grid; place-items: center; }
 .notice .h3 { margin-bottom: 6px; }
 .notice p { color: var(--text-500); font-size: var(--fs-body-m); }
 
-/* 토스트 */
-.toast {
-  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
-  background: var(--primary-950); color: var(--white);
-  padding: 14px 22px; border-radius: var(--radius-pill);
-  font-size: var(--fs-body-m); font-weight: 600;
-  box-shadow: 0 6px 24px rgba(0,0,0,.24);
-  opacity: 0; visibility: hidden; transition: opacity .15s ease, visibility .15s ease;
-  z-index: 80; max-width: calc(100% - 32px); text-align: center;
-}
-.toast.is-on { opacity: 1; visibility: visible; }
-
-/* ============================================================
-   반응형 — PC 중심 + 모바일 최소 지원
-   ============================================================ */
 @media (max-width: 1024px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .judge-chip .name, .judge-chip .code { display: none; }
 }
 @media (max-width: 768px) {
-  :root { --fs-h1: 26px; --fs-stat: 34px; }
-  .contest-select { max-width: 150px; }
-  .header-divider { display: none; }
   .kpi-grid { grid-template-columns: 1fr; }
-  .search input { width: 100%; }
-  .search { width: 100%; }
+  .search, .search input { width: 100%; }
   .page-head { align-items: flex-start; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
 }
 </style>
 </head>
@@ -333,15 +121,15 @@ table { border-collapse: collapse; }
       <span>JudiX</span>
     </a>
     <span class="header-divider" aria-hidden="true"></span>
-    <select class="contest-select" aria-label="대회 선택">
+    <select class="select" aria-label="대회 선택">
       <option>2026 청년 창업경진대회 · 본선</option>
       <option>2026 청년 창업경진대회 · 예선</option>
     </select>
 
     <div class="header-right">
       <span class="badge badge--purple">심사 진행 중</span>
-      <div class="judge-chip">
-        <span class="judge-avatar" aria-hidden="true">김</span>
+      <div class="user-chip">
+        <span class="user-avatar" aria-hidden="true">김</span>
         <div>
           <span class="name">김유니 심사위원</span>
           <span class="code">JD-2026-014</span>
@@ -390,7 +178,7 @@ table { border-collapse: collapse; }
         </div>
       </div>
 
-      <div class="card kpi kpi--done">
+      <div class="card kpi">
         <span class="chip" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         </span>
@@ -400,7 +188,7 @@ table { border-collapse: collapse; }
         </div>
       </div>
 
-      <div class="card kpi kpi--left">
+      <div class="card kpi">
         <span class="chip" aria-hidden="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
         </span>

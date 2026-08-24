@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>내 지원서 결과 — JudiX</title>
+<meta name="description" content="지원자가 자신의 지원서에 대한 AI 분석 요약을 열람하고 이의를 제기하는 화면.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap">
+
+<link rel="stylesheet" href="assets/judix.css">
+
+<style>
+/* ---- 지원자 결과 화면 전용 ---- */
+body { background: var(--gray-50); }
+.wrap { max-width: 940px; }
+
+.page { padding: 32px 0 80px; }
+.page-head { margin-bottom: 28px; }
+.page-head h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 10px; }
+.app-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 8px; }
+.app-meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: var(--fs-body-m); color: var(--text-500); }
+.app-meta strong { color: var(--text-900); font-weight: 600; }
+
+/* 심사 진행 상태 */
+.status-top { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.status-top .pct { font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-h3); color: var(--primary-900); }
+.progress-bar { height: 12px; border-radius: var(--radius-pill); background: var(--gray-50); border: 1px solid var(--gray-200); overflow: hidden; }
+.progress-fill { height: 100%; background: var(--primary-900); border-radius: var(--radius-pill); }
+.status-meta { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 18px; font-size: var(--fs-body-m); }
+.status-meta div { display: flex; gap: 8px; }
+.status-meta .lab { color: var(--text-500); }
+.status-meta .val { font-weight: 600; }
+
+/* 공개 범위 안내 */
+.disclosure { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+.disclosure-col { border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px 18px; background: var(--gray-50); }
+.disclosure-col h4 { display: flex; align-items: center; gap: 8px; font-size: var(--fs-body-m); font-weight: 700; margin-bottom: 10px; }
+.disclosure-col.is-open { border-left: 3px solid var(--success); border-radius: 0 12px 12px 0; }
+.disclosure-col.is-open h4 { color: var(--success); }
+.disclosure-col.is-closed { border-left: 3px solid var(--text-500); border-radius: 0 12px 12px 0; }
+.disclosure-col.is-closed h4 { color: var(--text-500); }
+.disclosure-col li { display: flex; gap: 8px; font-size: var(--fs-body-m); padding: 4px 0; color: var(--text-500); }
+.disclosure-col li::before { content: "·"; font-weight: 700; flex: none; }
+
+/* 분석 요약 항목 */
+.summary-item-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.summary-item-row .body { flex: 1; min-width: 260px; }
+.finding .disputed { margin-top: 10px; }
+
+/* 이의제기 현황 표 */
+.dispute-table { min-width: 640px; }
+.dispute-table .subject { font-weight: 600; }
+.dispute-table .date { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-500); white-space: nowrap; }
+.empty-row { padding: 40px 20px; text-align: center; color: var(--text-500); font-size: var(--fs-body-m); }
+
+/* 이의제기 모달 */
+dialog {
+  width: min(620px, 92vw); padding: 0; border: 0; border-radius: var(--radius-card);
+  background: var(--white); color: var(--text-900); box-shadow: 0 20px 60px rgba(0,0,0,.28);
+}
+dialog::backdrop { background: rgba(35, 26, 43, .5); }
+.modal-head { display: flex; align-items: center; gap: 12px; padding: 22px 24px; border-bottom: 1px solid var(--gray-200); }
+.modal-head .h3 { flex: 1; }
+.modal-close {
+  width: 44px; height: 44px; flex: none; border: 1px solid var(--gray-200); background: var(--white);
+  border-radius: 10px; display: grid; place-items: center; cursor: pointer; color: var(--text-500);
+}
+.modal-close:hover { border-color: var(--primary-700); color: var(--primary-900); }
+.modal-body { padding: 24px; }
+.modal-body .target { background: var(--gray-50); border: 1px solid var(--gray-200); border-left: 3px solid var(--accent-500); border-radius: 0 10px 10px 0; padding: 14px 16px; margin-bottom: 20px; }
+.modal-body .target .lab { font-size: var(--fs-caption); font-weight: 700; color: var(--accent-600); margin-bottom: 4px; }
+.modal-body .target p { font-size: var(--fs-body-m); }
+.modal-foot { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; padding: 18px 24px; border-top: 1px solid var(--gray-200); background: var(--gray-50); border-radius: 0 0 var(--radius-card) var(--radius-card); }
+.field + .field { margin-top: 18px; }
+
+@media (max-width: 768px) {
+  .disclosure { grid-template-columns: 1fr; }
+  .modal-foot .btn { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
+
+<!-- ============ 앱 헤더 ============ -->
+<header class="app-header">
+  <div class="wrap">
+    <a class="logo" href="index.html">
+      <span class="logo-mark" aria-hidden="true">J</span>
+      <span>JudiX</span>
+    </a>
+    <span class="header-divider" aria-hidden="true"></span>
+    <span class="header-contest">2026 청년 창업경진대회 · 본선</span>
+
+    <div class="header-right">
+      <span class="badge badge--brand">지원자</span>
+      <div class="user-chip">
+        <span class="user-avatar" aria-hidden="true">필</span>
+        <div>
+          <span class="name">필드로그</span>
+          <span class="code">A-2026-0047</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mock-note">
+  <div class="wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span>이 화면은 UI 목업입니다. 분석 요약·처리 현황은 모두 예시 데이터입니다.</span>
+    <a href="index.html">← 랜딩페이지로</a>
+  </div>
+</div>
+
+<main id="main" class="page">
+  <div class="wrap">
+
+    <div class="page-head">
+      <div class="app-title-row">
+        <h1>내 지원서 결과</h1>
+        <span class="badge badge--brand">심사 진행중</span>
+      </div>
+      <div class="app-meta">
+        <span>팀 <strong>필드로그</strong></span>
+        <span>지원번호 <strong class="mono">A-2026-0047</strong></span>
+        <span>제출일 <strong>2026-08-11</strong></span>
+      </div>
+    </div>
+
+    <!-- ---------- 심사 진행 상태 ---------- -->
+    <section class="card" aria-labelledby="st-title">
+      <div class="card-head">
+        <h2 class="h3" id="st-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          심사 진행 상태
+        </h2>
+      </div>
+
+      <div class="status-top">
+        <span class="body-m muted">배정된 심사위원 3명 중 2명이 심사를 완료했습니다.</span>
+        <span class="pct">2 / 3</span>
+      </div>
+      <div class="progress-bar" role="img" aria-label="심사위원 3명 중 2명 완료">
+        <div class="progress-fill" style="width:67%"></div>
+      </div>
+
+      <div class="status-meta">
+        <div><span class="lab">결과 발표 예정</span><span class="val">2026-09-05</span></div>
+        <div><span class="lab">이의제기 마감</span><span class="val">2026-09-12 18:00</span></div>
+      </div>
+
+      <p class="caption muted" style="margin-top:16px;">
+        개별 심사위원의 점수와 코멘트는 공개되지 않으며, 최종 합격 여부는 운영기관이 결정합니다.
+      </p>
+    </section>
+
+    <!-- ---------- 공개 범위 안내 (PRD 결정 #2) ---------- -->
+    <section class="card" aria-labelledby="dc-title">
+      <div class="card-head">
+        <h2 class="h3" id="dc-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+          무엇이 공개되나요?
+        </h2>
+      </div>
+      <p class="body-m muted">
+        지원자에게는 AI 분석 결과의 <strong>요약만</strong> 공개됩니다.
+        오탐 가능성과 개인정보 보호를 고려해 세부 항목은 비공개로 유지합니다.
+      </p>
+
+      <div class="disclosure">
+        <div class="disclosure-col is-open">
+          <h4>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+            공개되는 항목
+          </h4>
+          <ul>
+            <li>강점 요약</li>
+            <li>보완이 필요한 사항</li>
+            <li>심사 진행 상태</li>
+          </ul>
+        </div>
+        <div class="disclosure-col is-closed">
+          <h4>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            공개되지 않는 항목
+          </h4>
+          <ul>
+            <li>지원서 원문 인용 위치</li>
+            <li>AI 생성률 · 표절 검사 수치</li>
+            <li>심사위원별 점수와 코멘트</li>
+            <li>다른 참가팀과의 비교</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- AI 분석 요약 ---------- -->
+    <section class="card" aria-labelledby="sum-title">
+      <div class="card-head">
+        <h2 class="h3" id="sum-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          AI 분석 요약
+        </h2>
+        <span class="badge">참고용 · 오탐 가능</span>
+      </div>
+      <p class="body-m muted" style="margin-bottom:20px;">
+        내용이 사실과 다르거나 지원서를 제대로 반영하지 못했다고 판단되면 항목별로 이의를 제기할 수 있습니다.
+      </p>
+
+      <div id="summaryList">
+        <div class="finding finding--good" data-item="s1" data-kind="강점">
+          <div class="finding-head">
+            <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+            <h4>강점</h4>
+          </div>
+          <div class="summary-item-row">
+            <p class="body">팀 구성원의 경력이 지원 아이디어의 주제와 직접 연결되어 있습니다.</p>
+            <button class="btn btn--ghost btn--sm" data-dispute>이의제기</button>
+          </div>
+        </div>
+
+        <div class="finding finding--good" data-item="s2" data-kind="강점">
+          <div class="finding-head">
+            <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
+            <h4>강점</h4>
+          </div>
+          <div class="summary-item-row">
+            <p class="body">해결하려는 문제가 좁고 구체적으로 정의되어 있으며, 실증 계획이 일정과 함께 제시되어 있습니다.</p>
+            <button class="btn btn--ghost btn--sm" data-dispute>이의제기</button>
+          </div>
+        </div>
+
+        <div class="finding finding--gap" data-item="g1" data-kind="보완 필요">
+          <div class="finding-head">
+            <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
+            <h4>보완이 필요한 사항</h4>
+          </div>
+          <div class="summary-item-row">
+            <p class="body">시장 규모와 성장률로 제시된 수치에 산출 근거나 출처가 확인되지 않습니다.</p>
+            <button class="btn btn--ghost btn--sm" data-dispute>이의제기</button>
+          </div>
+        </div>
+
+        <div class="finding finding--gap" data-item="g2" data-kind="보완 필요">
+          <div class="finding-head">
+            <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
+            <h4>보완이 필요한 사항</h4>
+          </div>
+          <div class="summary-item-row">
+            <p class="body">제품의 핵심이 하드웨어인데 팀 구성에서 하드웨어 담당 인력이 확인되지 않습니다.</p>
+            <button class="btn btn--ghost btn--sm" data-dispute>이의제기</button>
+          </div>
+        </div>
+
+        <div class="finding finding--gap" data-item="g3" data-kind="보완 필요">
+          <div class="finding-head">
+            <span class="ico" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
+            <h4>보완이 필요한 사항</h4>
+          </div>
+          <div class="summary-item-row">
+            <p class="body">제출하신 사업계획서와 소개영상에서 주요 고객에 대한 설명이 서로 다르게 확인됩니다.</p>
+            <button class="btn btn--ghost btn--sm" data-dispute>이의제기</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="note-box" style="margin-top:20px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>이 요약은 AI가 생성한 참고 자료이며 합격 여부를 결정하지 않습니다. 최종 판단은 심사위원과 운영기관이 합니다.</span>
+      </div>
+    </section>
+
+    <!-- ---------- 이의제기 처리 현황 ---------- -->
+    <section class="card" aria-labelledby="dp-title">
+      <div class="card-head">
+        <h2 class="h3" id="dp-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          이의제기 처리 현황
+        </h2>
+        <span class="caption muted" aria-live="polite"><strong id="dpCount" class="mono">2</strong>건</span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="data-table dispute-table">
+          <thead>
+            <tr>
+              <th scope="col">접수일</th>
+              <th scope="col">대상 항목</th>
+              <th scope="col">이의 내용</th>
+              <th scope="col">처리 상태</th>
+            </tr>
+          </thead>
+          <tbody id="dpBody">
+            <tr>
+              <td class="date">2026-08-22</td>
+              <td class="subject">보완 필요</td>
+              <td>시장 규모 근거는 사업계획서 부록 3p에 출처를 표기했습니다. 본문만 검토된 것으로 보입니다.</td>
+              <td><span class="badge badge--brand">검토중</span></td>
+            </tr>
+            <tr>
+              <td class="date">2026-08-19</td>
+              <td class="subject">보완 필요</td>
+              <td>하드웨어 담당은 외부 제조 파트너로 계약되어 있으며 9p에 기재했습니다.</td>
+              <td><span class="badge badge--ok">반영</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="caption muted" style="margin-top:14px;">
+        처리 상태는 접수 → 검토중 → 반영 또는 기각 순으로 진행됩니다.
+        운영기관이 검토하며, 이의제기 내용과 처리 이력은 모두 기록됩니다.
+      </p>
+    </section>
+
+  </div>
+</main>
+
+<!-- ============ 이의제기 모달 ============ -->
+<dialog id="dpModal" aria-labelledby="dp-modal-title">
+  <form method="dialog">
+    <div class="modal-head">
+      <h2 class="h3" id="dp-modal-title">이의제기 제출</h2>
+      <button class="modal-close" value="cancel" aria-label="닫기">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="target">
+        <p class="lab" id="dpTargetKind">보완 필요</p>
+        <p id="dpTargetText"></p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="dpReason">어떤 점이 사실과 다른가요?</label>
+        <textarea id="dpReason" rows="5" placeholder="예: 이 보완 필요사항은 사업계획서 3페이지의 내용을 반영하지 못했습니다."></textarea>
+        <p class="field-hint">구체적인 페이지나 문장을 함께 적어 주시면 검토가 빨라집니다.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="dpRef">근거 위치 (선택)</label>
+        <input type="text" id="dpRef" placeholder="예: 사업계획서 3p, 부록 2p">
+      </div>
+
+      <div class="note-box" style="margin-top:18px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>제출된 이의제기는 운영기관에 접수되며, 처리 결과는 이 화면에서 확인하실 수 있습니다. 제출 후에는 수정할 수 없습니다.</span>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn--ghost btn--sm" value="cancel">취소</button>
+      <button class="btn btn--primary btn--sm" id="dpSubmit" value="submit">이의제기 제출</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var toastEl = document.getElementById('toast'), toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('is-on'); }, 2800);
+  }
+
+  var modal = document.getElementById('dpModal');
+  var targetKind = document.getElementById('dpTargetKind');
+  var targetText = document.getElementById('dpTargetText');
+  var reasonEl = document.getElementById('dpReason');
+  var refEl = document.getElementById('dpRef');
+  var body = document.getElementById('dpBody');
+  var countEl = document.getElementById('dpCount');
+  var currentItem = null;
+
+  /* 요약 항목의 [이의제기] 클릭 → 해당 항목을 담아 모달 열기 */
+  document.getElementById('summaryList').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-dispute]');
+    if (!btn) return;
+
+    var item = btn.closest('[data-item]');
+    if (item.dataset.done === '1') { toast('이미 이의를 제기한 항목입니다.'); return; }
+
+    currentItem = item;
+    targetKind.textContent = item.dataset.kind;
+    targetText.textContent = item.querySelector('.body').textContent.trim();
+    reasonEl.value = '';
+    refEl.value = '';
+    modal.showModal();
+    reasonEl.focus();
+  });
+
+  /* 제출 검증 — 내용이 비면 닫히지 않도록 */
+  document.getElementById('dpSubmit').addEventListener('click', function (e) {
+    if (!reasonEl.value.trim()) {
+      e.preventDefault();
+      toast('이의 내용을 입력해 주세요.');
+      reasonEl.focus();
+    }
+  });
+
+  modal.addEventListener('close', function () {
+    if (modal.returnValue !== 'submit' || !currentItem) return;
+
+    var today = new Date().toISOString().slice(0, 10);
+    var ref = refEl.value.trim();
+
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="date"></td><td class="subject"></td><td></td>' +
+      '<td><span class="badge badge--neutral">접수</span></td>';
+    tr.children[0].textContent = today;
+    tr.children[1].textContent = currentItem.dataset.kind;
+    tr.children[2].textContent = reasonEl.value.trim() + (ref ? ' (근거: ' + ref + ')' : '');
+    body.insertBefore(tr, body.firstChild);
+
+    countEl.textContent = body.querySelectorAll('tr').length;
+
+    /* 이의 제기한 항목에 표시를 남기고 버튼 비활성화 */
+    currentItem.dataset.done = '1';
+    var btn = currentItem.querySelector('[data-dispute]');
+    btn.textContent = '이의제기 접수됨';
+    btn.disabled = true;
+
+    var mark = document.createElement('span');
+    mark.className = 'badge badge--neutral disputed';
+    mark.textContent = '이의제기 접수 · 검토 대기';
+    currentItem.appendChild(mark);
+
+    toast('이의제기가 접수되었습니다. 처리 상태는 아래 표에서 확인하실 수 있습니다.');
+    currentItem = null;
+  });
+})();
+</script>
+
+</body>
+</html>
