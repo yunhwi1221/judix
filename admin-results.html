@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>최종 결과 확정 — JudiX</title>
+<meta name="description" content="운영기관이 합격선을 설정하고 최종 순위를 확정하는 화면.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap">
+
+<link rel="stylesheet" href="assets/judix.css">
+
+<style>
+/* ---- 최종 결과 확정 전용 ---- */
+body { background: var(--gray-50); }
+.wrap { max-width: 1080px; }
+
+.page { padding: 32px 0 80px; }
+.page-head { margin-bottom: 24px; }
+.page-head h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 700; letter-spacing: -0.02em; margin: 6px 0 8px; }
+
+/* 확정 차단 안내 */
+.blocker {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-left: 3px solid var(--danger); border-radius: 0 var(--radius-card) var(--radius-card) 0;
+  padding: 20px 24px; margin-bottom: 24px;
+}
+.blocker.is-clear { border-left-color: var(--success); }
+.blocker h2 { display: flex; align-items: center; gap: 10px; font-size: var(--fs-h3); font-weight: 600; margin-bottom: 8px; color: var(--danger); }
+.blocker.is-clear h2 { color: var(--success); }
+.blocker h2 svg { flex: none; }
+.blocker p { font-size: var(--fs-body-m); color: var(--text-500); }
+.blocker ul { margin-top: 10px; }
+.blocker li { display: flex; gap: 8px; font-size: var(--fs-body-m); color: var(--text-500); padding: 3px 0; }
+.blocker li::before { content: "·"; font-weight: 700; flex: none; }
+
+/* 합격선 설정 */
+.cutoffs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.cutoff label { display: block; font-size: var(--fs-body-m); font-weight: 600; margin-bottom: 8px; }
+.cutoff .hint { font-size: var(--fs-caption); color: var(--text-500); margin-top: 6px; }
+
+.summary { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--gray-200); }
+.summary div { display: flex; align-items: baseline; gap: 8px; }
+.summary .n { font-family: var(--font-mono); font-size: var(--fs-h2); font-weight: 700; }
+.summary .l { font-size: var(--fs-body-m); color: var(--text-500); }
+.summary .pass .n { color: var(--success); }
+.summary .wait .n { color: var(--primary-900); }
+.summary .fail .n { color: var(--text-500); }
+
+/* 순위 표 */
+.rank-table { min-width: 820px; }
+.rank-table .rk { font-family: var(--font-mono); font-size: var(--fs-h3); font-weight: 700; width: 56px; }
+.rank-table .avg { font-family: var(--font-mono); font-size: var(--fs-body-l); font-weight: 700; }
+.rank-table .scores { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-500); white-space: nowrap; }
+.rank-table tr.is-cut td, .rank-table tr.is-cut th { border-top: 2px solid var(--primary-900); }
+.cut-note { font-size: var(--fs-caption); font-weight: 700; color: var(--primary-900); }
+
+/* 확정 결과 카드 (패턴 4-6) */
+.confirmed { display: none; text-align: center; padding: 44px 32px; }
+.confirmed.is-on { display: block; }
+.confirmed-icon { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 22px; background: var(--gray-50); color: var(--success); display: grid; place-items: center; }
+.confirmed .h2 { margin-bottom: 12px; }
+.confirmed p { color: var(--text-500); margin-bottom: 10px; }
+
+dialog { width: min(520px, 92vw); padding: 0; border: 0; border-radius: var(--radius-card); background: var(--white); color: var(--text-900); box-shadow: 0 20px 60px rgba(0,0,0,.28); }
+dialog::backdrop { background: rgba(35, 26, 43, .5); }
+.modal-head { padding: 22px 24px; border-bottom: 1px solid var(--gray-200); }
+.modal-body { padding: 24px; }
+.modal-body p { font-size: var(--fs-body-m); margin-bottom: 12px; }
+.modal-body .recap { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 10px; padding: 14px 16px; font-size: var(--fs-body-m); }
+.modal-body .recap div { display: flex; justify-content: space-between; padding: 3px 0; }
+.modal-body .recap .n { font-family: var(--font-mono); font-weight: 700; }
+.modal-foot { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; padding: 18px 24px; border-top: 1px solid var(--gray-200); background: var(--gray-50); border-radius: 0 0 var(--radius-card) var(--radius-card); }
+
+@media (max-width: 768px) {
+  .cutoffs { grid-template-columns: 1fr; }
+  .modal-foot .btn { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
+
+<header class="app-header">
+  <div class="wrap">
+    <a class="logo" href="index.html">
+      <span class="logo-mark" aria-hidden="true">J</span>
+      <span>JudiX</span>
+    </a>
+    <span class="header-divider" aria-hidden="true"></span>
+    <span class="header-contest">2026 청년 창업경진대회 · 본선</span>
+    <div class="header-right">
+      <span class="badge badge--brand">운영기관</span>
+      <div class="user-chip">
+        <span class="user-avatar" aria-hidden="true">운</span>
+        <div>
+          <span class="name">한국창업진흥원</span>
+          <span class="code">ADMIN-02</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mock-note">
+  <div class="wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span class="msg">이 화면은 UI 목업입니다. 순위·점수는 모두 예시 데이터입니다. (PRD 6.3 · Phase 2)</span>
+    <nav class="screen-nav" aria-label="목업 화면 이동">
+      <span class="lab">화면 이동</span>
+      <a href="index.html">랜딩</a>
+      <a href="login.html">로그인</a>
+      <a href="judge-dashboard.html">심사위원 목록</a>
+      <a href="application-detail.html">지원서 분석</a>
+      <a href="applicant-result.html">지원자 결과</a>
+      <a href="admin-dashboard.html">운영 대시보드</a>
+      <a href="admin-teams.html">참가팀 관리</a>
+      <a href="admin-assign.html">심사위원 배정</a>
+      <a href="admin-results.html" aria-current="page">최종 결과</a>
+      <a href="admin-report.html">결과보고서</a>
+    </nav>
+  </div>
+</div>
+
+<main id="main" class="page">
+  <div class="wrap">
+
+    <div class="page-head">
+      <a class="backlink" href="admin-dashboard.html">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        운영 대시보드
+      </a>
+      <h1>최종 결과 확정</h1>
+      <p class="body-m muted">평균 점수 순위에 합격선을 적용해 최종 결과를 확정합니다. 결정 권한은 운영기관에 있습니다.</p>
+    </div>
+
+    <!-- ---------- 확정 가능 여부 ---------- -->
+    <div class="blocker" id="blocker">
+      <h2 id="blockerTitle"></h2>
+      <p id="blockerText"></p>
+      <ul id="blockerList"></ul>
+    </div>
+
+    <!-- ---------- 합격선 설정 ---------- -->
+    <section class="card" aria-labelledby="cut-title">
+      <div class="card-head">
+        <h2 class="h3" id="cut-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+          합격선 설정
+        </h2>
+      </div>
+
+      <div class="cutoffs">
+        <div class="cutoff">
+          <label for="passN">합격 팀 수</label>
+          <input type="number" id="passN" min="0" value="5">
+          <p class="hint">상위 몇 팀을 합격으로 할지 정합니다.</p>
+        </div>
+        <div class="cutoff">
+          <label for="waitN">예비 팀 수</label>
+          <input type="number" id="waitN" min="0" value="3">
+          <p class="hint">합격 팀 다음 순위부터 예비로 지정됩니다.</p>
+        </div>
+        <div class="cutoff">
+          <label for="minScore">최소 통과 점수</label>
+          <input type="number" id="minScore" min="0" max="100" value="80">
+          <p class="hint">이 점수 미만은 순위와 무관하게 합격에서 제외됩니다.</p>
+        </div>
+      </div>
+
+      <div class="summary">
+        <div class="pass"><span class="n" id="sPass">0</span><span class="l">합격</span></div>
+        <div class="wait"><span class="n" id="sWait">0</span><span class="l">예비</span></div>
+        <div class="fail"><span class="n" id="sFail">0</span><span class="l">탈락</span></div>
+        <div><span class="n" id="sTotal">0</span><span class="l">심사 완료 팀</span></div>
+      </div>
+    </section>
+
+    <!-- ---------- 순위 표 ---------- -->
+    <section class="card" aria-labelledby="rank-title">
+      <div class="card-head">
+        <h2 class="h3" id="rank-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4"/><path d="M17 4h3v4a5 5 0 01-5 5H9a5 5 0 01-5-5V4h3z"/><path d="M7 4h10v3a5 5 0 01-10 0z"/></svg>
+          최종 순위
+        </h2>
+        <span class="caption muted">평균 점수 내림차순</span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="data-table rank-table">
+          <caption class="caption muted" style="caption-side:bottom; padding:14px 18px; text-align:left;">
+            편차가 큰 팀은 재검토 표시가 함께 나타납니다. 확정 전에 해당 팀의 코멘트를 확인하시기 바랍니다.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">순위</th>
+              <th scope="col">팀</th>
+              <th scope="col">분야</th>
+              <th scope="col">심사위원 점수</th>
+              <th scope="col">평균</th>
+              <th scope="col">결과</th>
+            </tr>
+          </thead>
+          <tbody id="rankBody"></tbody>
+        </table>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:22px;">
+        <button class="btn btn--primary" id="confirmBtn">최종 결과 확정</button>
+        <a class="btn btn--ghost" href="admin-report.html">결과보고서 보기</a>
+      </div>
+    </section>
+
+    <!-- ---------- 확정 완료 (패턴 4-6) ---------- -->
+    <div class="card confirmed" id="confirmed">
+      <span class="confirmed-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </span>
+      <h2 class="h2">최종 결과가 확정되었습니다</h2>
+      <p id="confirmedSummary"></p>
+      <p class="caption">확정 이력은 감사로그(AuditLog)에 기록되었으며, 지원자에게 결과 안내가 발송됩니다.</p>
+      <span class="badge badge--ok" style="margin-top:18px;">STATUS : 결과 확정 완료</span>
+    </div>
+
+  </div>
+</main>
+
+<!-- ---------- 확정 확인 모달 ---------- -->
+<dialog id="confirmModal" aria-labelledby="cm-title">
+  <form method="dialog">
+    <div class="modal-head">
+      <h2 class="h3" id="cm-title">최종 결과를 확정할까요?</h2>
+    </div>
+    <div class="modal-body">
+      <p>확정하면 순위가 고정되고 지원자에게 결과가 안내됩니다. <strong>되돌릴 수 없습니다.</strong></p>
+      <div class="recap" id="cmRecap"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn--ghost btn--sm" value="cancel">취소</button>
+      <button class="btn btn--primary btn--sm" value="confirm">확정하기</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="assets/mock-data.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* 데이터는 assets/mock-data.js 한 곳에서만 정의한다 */
+  var M = window.JUDIX_MOCK;
+  var ranked = M.judged();          /* 평균 내림차순, 3인 심사 완료 팀만 */
+
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+
+  var toastEl = $('#toast'), toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('is-on'); }, 3000);
+  }
+
+  /* ==========================================================
+     확정 차단 조건
+     이의제기가 미처리 상태면 순위가 바뀔 수 있으므로 확정을 막는다.
+     (PRD 5.9 — 이의제기 결과가 분석 요약에 반영될 수 있음)
+     ========================================================== */
+  function blockers() {
+    var list = [];
+    var open = M.openDisputes();
+    if (open.length) {
+      list.push('미처리 이의제기 ' + open.length + '건 (' +
+        open.map(function (d) { return d.team; }).join(', ') + ')');
+    }
+    var notDone = M.active() - M.byStatus('심사완료').length;
+    if (notDone > 0) list.push('심사가 끝나지 않은 팀 ' + notDone + '팀');
+    return list;
+  }
+
+  function renderBlocker() {
+    var list = blockers();
+    var box = $('#blocker');
+    box.classList.toggle('is-clear', list.length === 0);
+
+    if (list.length) {
+      $('#blockerTitle').innerHTML =
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg>' +
+        '아직 확정할 수 없습니다';
+      $('#blockerText').textContent =
+        '아래 항목이 처리되어야 최종 결과를 확정할 수 있습니다. 이의제기가 반영되면 순위가 바뀔 수 있습니다.';
+      $('#blockerList').innerHTML = list.map(function (t) {
+        return '<li><span>' + esc(t) + '</span></li>';
+      }).join('');
+    } else {
+      $('#blockerTitle').innerHTML =
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>' +
+        '확정 준비가 완료되었습니다';
+      $('#blockerText').textContent = '미처리 이의제기가 없고 모든 팀의 심사가 끝났습니다.';
+      $('#blockerList').innerHTML = '';
+    }
+    return list;
+  }
+
+  /* ==========================================================
+     합격선 적용
+     ========================================================== */
+  function classify() {
+    var passN = Math.max(0, parseInt($('#passN').value, 10) || 0);
+    var waitN = Math.max(0, parseInt($('#waitN').value, 10) || 0);
+    var minS  = Math.max(0, parseInt($('#minScore').value, 10) || 0);
+
+    var pass = 0, wait = 0;
+    return ranked.map(function (t, i) {
+      var r;
+      if (pass < passN && t.avg >= minS) { r = '합격'; pass++; }
+      else if (wait < waitN) { r = '예비'; wait++; }
+      else { r = '탈락'; }
+      return { team: t, rank: i + 1, result: r };
+    });
+  }
+
+  var BADGE = { '합격': 'badge--ok', '예비': 'badge--brand', '탈락': 'badge--neutral' };
+
+  function render() {
+    var rows = classify();
+    var counts = { '합격': 0, '예비': 0, '탈락': 0 };
+    rows.forEach(function (r) { counts[r.result]++; });
+
+    $('#sPass').textContent = counts['합격'];
+    $('#sWait').textContent = counts['예비'];
+    $('#sFail').textContent = counts['탈락'];
+    $('#sTotal').textContent = ranked.length;
+
+    $('#rankBody').innerHTML = rows.map(function (r, i) {
+      var prev = i > 0 ? rows[i - 1].result : null;
+      var isCut = prev && prev !== r.result;
+      var t = r.team;
+      return '<tr class="' + (isCut ? 'is-cut' : '') + '">' +
+        '<td class="rk">' + r.rank + '</td>' +
+        '<th scope="row" class="who">' + esc(t.name) +
+          (isCut ? '<span class="cut-note" style="display:block">— ' + r.result + '선 —</span>' : '') +
+        '</th>' +
+        '<td>' + esc(t.field) + '</td>' +
+        '<td class="scores">' + t.scores.map(function (s) {
+          return esc(s.judge) + ' ' + s.score;
+        }).join(' · ') + '</td>' +
+        '<td class="avg">' + t.avg.toFixed(1) + '</td>' +
+        '<td><span class="badge ' + BADGE[r.result] + '">' + r.result + '</span>' +
+          (t.flagged ? ' <span class="badge badge--risk">재검토</span>' : '') +
+        '</td></tr>';
+    }).join('');
+
+    return counts;
+  }
+
+  ['passN', 'waitN', 'minScore'].forEach(function (id) {
+    $('#' + id).addEventListener('input', render);
+  });
+
+  /* ==========================================================
+     확정
+     ========================================================== */
+  var modal = $('#confirmModal');
+
+  $('#confirmBtn').addEventListener('click', function () {
+    var list = renderBlocker();
+    if (list.length) {
+      toast('확정할 수 없습니다 — ' + list[0] + '. 운영 대시보드에서 먼저 처리해 주세요.');
+      return;
+    }
+    var c = render();
+    $('#cmRecap').innerHTML =
+      '<div><span>합격</span><span class="n">' + c['합격'] + '팀</span></div>' +
+      '<div><span>예비</span><span class="n">' + c['예비'] + '팀</span></div>' +
+      '<div><span>탈락</span><span class="n">' + c['탈락'] + '팀</span></div>';
+    modal.showModal();
+  });
+
+  modal.addEventListener('close', function () {
+    if (modal.returnValue !== 'confirm') return;
+    var c = render();
+    $('#confirmedSummary').textContent =
+      '합격 ' + c['합격'] + '팀, 예비 ' + c['예비'] + '팀, 탈락 ' + c['탈락'] + '팀으로 확정되었습니다.';
+    $('#confirmed').classList.add('is-on');
+    $('#confirmBtn').disabled = true;
+    toast('최종 결과를 확정했습니다. (목업 — 실제로 발송되지 않습니다)');
+    $('#confirmed').scrollIntoView({ block: 'center', behavior: 'auto' });
+  });
+
+  renderBlocker();
+  render();
+})();
+</script>
+
+</body>
+</html>

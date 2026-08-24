@@ -157,6 +157,8 @@ body { background: var(--gray-50); }
       <a href="admin-dashboard.html">운영 대시보드</a>
       <a href="admin-teams.html">참가팀 관리</a>
       <a href="admin-assign.html" aria-current="page">심사위원 배정</a>
+      <a href="admin-results.html">최종 결과</a>
+      <a href="admin-report.html">결과보고서</a>
     </nav>
   </div>
 </div>
@@ -324,44 +326,18 @@ body { background: var(--gray-50); }
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="assets/mock-data.js"></script>
 <script>
 (function () {
   'use strict';
 
-  /* ==========================================================
-     데이터
-     teams: admin-teams.html에서 '배정 부족(3인 미만, 반려 제외)'으로
-            집계되는 12팀과 동일하다.
-     ========================================================== */
-  var JUDGES = [
-    { code: 'JD-2026-014', name: '김유니',  fields: ['농업', '환경'],     base: 12 },
-    { code: 'JD-2026-007', name: '박서준',  fields: ['의료', '복지'],     base: 11 },
-    { code: 'JD-2026-021', name: '이하늘',  fields: ['핀테크', '커머스'], base: 13 },
-    { code: 'JD-2026-033', name: '정민호',  fields: ['제조', '환경'],     base: 10 },
-    { code: 'JD-2026-005', name: '최은영',  fields: ['교육', '복지'],     base: 9 },
-    { code: 'JD-2026-012', name: '한지원',  fields: ['푸드', '커머스'],   base: 8 },
-    { code: 'JD-2026-018', name: '오세훈',  fields: ['물류', '제조'],     base: 10 },
-    { code: 'JD-2026-024', name: '윤가람',  fields: ['농업', '푸드'],     base: 7 },
-    { code: 'JD-2026-029', name: '서준혁',  fields: ['환경', '제조'],     base: 9 },
-    { code: 'JD-2026-002', name: '임수아',  fields: ['교육', '의료'],     base: 8 },
-    { code: 'JD-2026-036', name: '강태민',  fields: ['핀테크', '물류'],   base: 11 },
-    { code: 'JD-2026-041', name: '노현주',  fields: ['복지', '교육'],     base: 6 }
-  ];
-
-  var TEAMS = [
-    { name: '리터니',     field: '물류',   pre: 2 },
-    { name: '워드브릿지', field: '핀테크', pre: 2 },
-    { name: '미들핏',     field: '복지',   pre: 1 },
-    { name: '안심귀가',   field: '복지',   pre: 2 },
-    { name: '빌드셰어',   field: '제조',   pre: 1 },
-    { name: '씨앗상점',   field: '농업',   pre: 2 },
-    { name: '리버스핀',   field: '핀테크', pre: 0 },
-    { name: '북클립',     field: '교육',   pre: 0 },
-    { name: '패브릭투',   field: '제조',   pre: 2 },
-    { name: '런웨이',     field: '커머스', pre: 1 },
-    { name: '그린루프',   field: '환경',   pre: 0 },
-    { name: '미래학당',   field: '교육',   pre: 0 }
-  ];
+  /* 데이터는 assets/mock-data.js 한 곳에서만 정의한다.
+     TEAMS는 '배정 부족' 집계에서 그대로 파생되므로 참가팀 관리 화면과 항상 일치한다. */
+  var M = window.JUDIX_MOCK;
+  var JUDGES = M.judges;
+  var TEAMS = M.short().map(function (t) {
+    return { name: t.name, field: t.field, pre: t.assigned };
+  });
 
   var MODES = {
     manual: { label: '수동', canAuto: false, canEdit: true,

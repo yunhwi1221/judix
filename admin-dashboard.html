@@ -33,30 +33,26 @@ body { background: var(--gray-50); }
 .mini-bar { display: flex; align-items: center; gap: 10px; min-width: 160px; }
 .mini-track { flex: 1; height: 8px; border-radius: var(--radius-pill); background: var(--gray-200); overflow: hidden; }
 .mini-fill { height: 100%; background: var(--primary-900); border-radius: var(--radius-pill); }
-.mini-num { font-family: var(--font-mono); font-size: var(--fs-caption); font-weight: 700; color: var(--text-500); width: 42px; text-align: right; flex: none; }
+.mini-num { font-family: var(--font-mono); font-size: var(--fs-caption); font-weight: 700; color: var(--text-500); width: 46px; text-align: right; flex: none; }
 
 /* ============================================================
    평가위원 간 편차 — 점 분산도
-   심사위원 3명의 점수를 점으로, 최소~최대를 선으로, 평균을 눈금으로.
-   판별색을 쓰지 않고 위치로만 구분하며, 이상치만 상태색+아이콘+텍스트로 표시.
+   심사위원 3인의 점수를 점으로, 최소~최대를 선으로, 평균을 눈금으로.
+   판별색을 쓰지 않고 위치로만 구분하며, 폭이 큰 행만 상태색+텍스트로 표시.
    ============================================================ */
-.chart { margin-top: 4px; }
-.chart-legend { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 20px; font-size: var(--fs-caption); color: var(--text-500); }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 18px; font-size: var(--fs-caption); color: var(--text-500); }
 .chart-legend span { display: inline-flex; align-items: center; gap: 7px; }
 .lg-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary-900); box-shadow: 0 0 0 2px var(--white); flex: none; }
 .lg-mean { width: 3px; height: 15px; background: var(--text-900); border-radius: 2px; flex: none; }
 .lg-range { width: 18px; height: 2px; background: var(--gray-200); flex: none; }
 
-.chart-row { display: grid; grid-template-columns: 168px minmax(0, 1fr) 108px; gap: 16px; align-items: center; padding: 11px 0; }
+.chart-row { display: grid; grid-template-columns: 158px minmax(0, 1fr) 104px; gap: 16px; align-items: center; padding: 9px 0; }
 .chart-row + .chart-row { border-top: 1px solid var(--gray-200); }
 .chart-label { font-size: var(--fs-body-m); font-weight: 600; }
 .chart-label .sub { display: block; font-size: var(--fs-caption); font-weight: 500; color: var(--text-500); }
 
-.track { position: relative; height: 34px; }
-.track::before {                       /* 기준선 */
-  content: ""; position: absolute; left: 0; right: 0; top: 50%;
-  height: 1px; background: var(--gray-200);
-}
+.track { position: relative; height: 30px; }
+.track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--gray-200); }
 .range { position: absolute; top: 50%; height: 2px; background: var(--gray-200); transform: translateY(-50%); border-radius: 2px; }
 .row-flag .range { background: var(--danger); opacity: .35; }
 .dot {
@@ -72,17 +68,18 @@ body { background: var(--gray-50); }
 .chart-val { text-align: right; font-size: var(--fs-caption); color: var(--text-500); }
 .chart-val .avg { font-family: var(--font-mono); font-size: var(--fs-body-l); font-weight: 700; color: var(--text-900); display: block; }
 .row-flag .chart-val .avg { color: var(--danger); }
+.flag-row { display: flex; justify-content: flex-end; margin-top: 5px; }
 
-.axis { display: grid; grid-template-columns: 168px minmax(0, 1fr) 108px; gap: 16px; margin-top: 8px; }
+.axis { display: grid; grid-template-columns: 158px minmax(0, 1fr) 104px; gap: 16px; margin-top: 8px; }
 .axis-scale { position: relative; height: 22px; font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-500); }
 .axis-scale span { position: absolute; transform: translateX(-50%); top: 0; }
 
-.flag-row { display: flex; align-items: center; gap: 7px; margin-top: 5px; }
+.scores-cell { font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-500); white-space: nowrap; }
 
 @media (max-width: 860px) {
   .statband-grid { grid-template-columns: repeat(2, 1fr); }
   .chart-row, .axis { grid-template-columns: 1fr; gap: 8px; }
-  .chart-val { text-align: left; }
+  .chart-val, .flag-row { text-align: left; justify-content: flex-start; }
   .chart-val .avg { display: inline; margin-right: 8px; }
   .axis-scale { display: none; }
 }
@@ -136,6 +133,8 @@ body { background: var(--gray-50); }
       <a href="admin-dashboard.html" aria-current="page">운영 대시보드</a>
       <a href="admin-teams.html">참가팀 관리</a>
       <a href="admin-assign.html">심사위원 배정</a>
+      <a href="admin-results.html">최종 결과</a>
+      <a href="admin-report.html">결과보고서</a>
     </nav>
   </div>
 </div>
@@ -151,7 +150,7 @@ body { background: var(--gray-50); }
       <div class="head-actions">
         <a class="btn btn--ghost btn--sm" href="admin-teams.html">참가팀 관리</a>
         <a class="btn btn--ghost btn--sm" href="admin-assign.html">심사위원 배정</a>
-        <button class="btn btn--primary btn--sm" data-todo="결과보고서 생성">결과보고서 생성</button>
+        <a class="btn btn--primary btn--sm" href="admin-results.html">최종 결과 확정</a>
       </div>
     </div>
 
@@ -159,22 +158,10 @@ body { background: var(--gray-50); }
     <section class="statband" aria-labelledby="kpi-title">
       <h2 class="h3" id="kpi-title" style="margin-bottom:26px;">대회 현황</h2>
       <div class="statband-grid">
-        <div class="stat-item">
-          <span class="num">42</span>
-          <span class="label">참가팀</span>
-        </div>
-        <div class="stat-item">
-          <span class="num">12</span>
-          <span class="label">배정된 심사위원</span>
-        </div>
-        <div class="stat-item">
-          <span class="num">29%</span>
-          <span class="label">심사 완료 (12 / 41팀 · 반려 1팀 제외)</span>
-        </div>
-        <div class="stat-item">
-          <span class="num">03</span>
-          <span class="label">미처리 이의제기</span>
-        </div>
+        <div class="stat-item"><span class="num" id="kTeams">–</span><span class="label">참가팀</span></div>
+        <div class="stat-item"><span class="num" id="kJudges">–</span><span class="label">배정된 심사위원</span></div>
+        <div class="stat-item"><span class="num" id="kDone">–</span><span class="label" id="kDoneLabel">심사 완료</span></div>
+        <div class="stat-item"><span class="num" id="kOpen">–</span><span class="label">미처리 이의제기</span></div>
       </div>
       <p class="statband-note">
         ※ 위 수치는 진행 상황을 집계한 값이며, 서비스 성과 지표가 아닙니다.
@@ -203,73 +190,24 @@ body { background: var(--gray-50); }
               <th scope="col">상태</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <th scope="row" class="who">김유니</th>
-              <td class="mono">JD-2026-014</td>
-              <td>농업 · 환경</td>
-              <td>
-                <div class="mini-bar">
-                  <span class="mini-track"><span class="mini-fill" style="width:42%"></span></span>
-                  <span class="mini-num">5/12</span>
-                </div>
-              </td>
-              <td><span class="badge badge--brand">진행중</span></td>
-            </tr>
-            <tr>
-              <th scope="row" class="who">박서준</th>
-              <td class="mono">JD-2026-007</td>
-              <td>의료 · 헬스케어</td>
-              <td>
-                <div class="mini-bar">
-                  <span class="mini-track"><span class="mini-fill" style="width:100%"></span></span>
-                  <span class="mini-num">11/11</span>
-                </div>
-              </td>
-              <td><span class="badge badge--ok">완료</span></td>
-            </tr>
-            <tr>
-              <th scope="row" class="who">이하늘</th>
-              <td class="mono">JD-2026-021</td>
-              <td>핀테크 · 커머스</td>
-              <td>
-                <div class="mini-bar">
-                  <span class="mini-track"><span class="mini-fill" style="width:69%"></span></span>
-                  <span class="mini-num">9/13</span>
-                </div>
-              </td>
-              <td><span class="badge badge--brand">진행중</span></td>
-            </tr>
-            <tr>
-              <th scope="row" class="who">정민호</th>
-              <td class="mono">JD-2026-033</td>
-              <td>제조 · 소재</td>
-              <td>
-                <div class="mini-bar">
-                  <span class="mini-track"><span class="mini-fill" style="width:0%"></span></span>
-                  <span class="mini-num">0/10</span>
-                </div>
-              </td>
-              <td><span class="badge badge--risk">미착수 · 독려 필요</span></td>
-            </tr>
-          </tbody>
+          <tbody id="judgeBody"></tbody>
         </table>
       </div>
     </section>
 
-    <!-- ---------- 평가위원 간 편차 시각화 ---------- -->
+    <!-- ---------- 평가위원 간 편차 ---------- -->
     <section class="card" aria-labelledby="dev-title">
       <div class="card-head">
         <h2 class="h3" id="dev-title">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><path d="M3 20h18"/></svg>
           평가위원 간 편차
         </h2>
-        <span class="caption muted">3인 심사가 모두 끝난 5개 팀</span>
+        <span class="caption muted" id="devCaption">–</span>
       </div>
 
       <p class="body-m muted" style="margin-bottom:18px;">
         각 팀에 배정된 심사위원 3인의 점수를 나란히 표시합니다.
-        점수 폭이 <strong>20점 이상</strong>이면 재검토 대상으로 표시됩니다.
+        점수 폭이 <strong id="flagAt">20</strong>점 이상이면 재검토 대상으로 표시됩니다.
       </p>
 
       <div class="chart-legend">
@@ -278,12 +216,10 @@ body { background: var(--gray-50); }
         <span><i class="lg-range" aria-hidden="true"></i> 최저~최고 범위</span>
       </div>
 
-      <div class="chart" id="chart"></div>
+      <div id="chart"></div>
 
       <div class="axis" aria-hidden="true">
-        <span></span>
-        <div class="axis-scale" id="axisScale"></div>
-        <span></span>
+        <span></span><div class="axis-scale" id="axisScale"></div><span></span>
       </div>
 
       <div class="note-box" style="margin-top:20px;">
@@ -292,7 +228,7 @@ body { background: var(--gray-50); }
       </div>
     </section>
 
-    <!-- ---------- 점수 취합 (표 형태 — 위 차트의 데이터 뷰) ---------- -->
+    <!-- ---------- 점수 취합 (위 차트의 표 뷰) ---------- -->
     <section class="card" aria-labelledby="agg-title">
       <div class="card-head">
         <h2 class="h3" id="agg-title">
@@ -303,7 +239,7 @@ body { background: var(--gray-50); }
       </div>
 
       <div class="table-scroll">
-        <table class="data-table" id="aggTable" style="min-width:720px;">
+        <table class="data-table" style="min-width:760px;">
           <caption class="caption muted" style="caption-side:bottom; padding:14px 18px; text-align:left;">
             위 편차 차트와 동일한 데이터입니다. 최종 순위는 이의제기 처리 완료 후 확정됩니다.
           </caption>
@@ -311,9 +247,8 @@ body { background: var(--gray-50); }
             <tr>
               <th scope="col">순위</th>
               <th scope="col">팀</th>
-              <th scope="col">김유니</th>
-              <th scope="col">박서준</th>
-              <th scope="col">이하늘</th>
+              <th scope="col">분야</th>
+              <th scope="col">심사위원 점수</th>
               <th scope="col">평균</th>
               <th scope="col">편차</th>
             </tr>
@@ -330,7 +265,7 @@ body { background: var(--gray-50); }
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
           이의제기 관리
         </h2>
-        <span class="caption muted" aria-live="polite">미처리 <strong id="openCount" class="mono">3</strong>건</span>
+        <span class="caption muted" aria-live="polite">미처리 <strong id="openCount" class="mono">–</strong>건</span>
       </div>
 
       <div class="table-scroll">
@@ -343,38 +278,7 @@ body { background: var(--gray-50); }
               <th scope="col">처리 상태</th>
             </tr>
           </thead>
-          <tbody id="dpBody">
-            <tr data-status="접수">
-              <td class="mono caption">2026-08-22</td>
-              <th scope="row" class="who">필드로그</th>
-              <td>시장 규모 근거는 사업계획서 부록 3p에 출처를 표기했습니다. 본문만 검토된 것으로 보입니다.</td>
-              <td></td>
-            </tr>
-            <tr data-status="검토중">
-              <td class="mono caption">2026-08-21</td>
-              <th scope="row" class="who">케어링크</th>
-              <td>심사위원 간 점수 차이가 24점에 달합니다. 평가 근거를 확인하고 싶습니다.</td>
-              <td></td>
-            </tr>
-            <tr data-status="접수">
-              <td class="mono caption">2026-08-20</td>
-              <th scope="row" class="who">플랜트원</th>
-              <td>영상에서 언급한 내용이 지원서에 없다고 표시되었으나, 12페이지에 기재되어 있습니다.</td>
-              <td></td>
-            </tr>
-            <tr data-status="반영">
-              <td class="mono caption">2026-08-19</td>
-              <th scope="row" class="who">필드로그</th>
-              <td>하드웨어 담당은 외부 제조 파트너로 계약되어 있으며 9p에 기재했습니다.</td>
-              <td></td>
-            </tr>
-            <tr data-status="기각">
-              <td class="mono caption">2026-08-18</td>
-              <th scope="row" class="who">브릿지핀</th>
-              <td>경쟁사 분석이 부족하다는 지적에 동의하지 않습니다.</td>
-              <td></td>
-            </tr>
-          </tbody>
+          <tbody id="dpBody"></tbody>
         </table>
       </div>
 
@@ -388,11 +292,26 @@ body { background: var(--gray-50); }
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<script src="assets/mock-data.js"></script>
 <script>
 (function () {
   'use strict';
 
-  var toastEl = document.getElementById('toast'), toastTimer;
+  /* 데이터는 assets/mock-data.js 한 곳에서만 정의한다.
+     이 화면의 모든 숫자는 아래 M에서 파생되며 직접 적지 않는다. */
+  var M = window.JUDIX_MOCK;
+
+  var MIN = 50, MAX = 100;          /* 편차 차트 가로축 구간 */
+  var pos = function (v) { return ((v - MIN) / (MAX - MIN)) * 100; };
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+  var pad2 = function (n) { return String(n).padStart(2, '0'); };
+
+  var toastEl = $('#toast'), toastTimer;
   function toast(msg) {
     toastEl.textContent = msg;
     toastEl.classList.add('is-on');
@@ -400,140 +319,115 @@ body { background: var(--gray-50); }
     toastTimer = setTimeout(function () { toastEl.classList.remove('is-on'); }, 2800);
   }
 
-  /* ==========================================================
-     평가위원 간 편차 데이터
-     scores 순서 = [김유니, 박서준, 이하늘]
-     ========================================================== */
-  var JUDGES = ['김유니', '박서준', '이하늘'];
-  /* 김유니 열의 값은 심사위원 대시보드(judge-dashboard.html)의 '완료' 팀 점수와 일치해야 한다.
-     아직 '진행중'인 팀(필드로그·오션가드 등)은 3인 집계가 끝나지 않아 여기 포함하지 않는다. */
-  var TEAMS = [
-    { team: '사운드핏',     field: '의료기기',   scores: [90, 92, 88] },
-    { team: '모두의노트',   field: '교육·접근성', scores: [88, 91, 85] },
-    { team: '닥터나우케어', field: '헬스케어',   scores: [85, 87, 82] },
-    { team: '플랜트원',     field: '푸드테크',   scores: [81, 90, 68] },
-    { team: '케어링크',     field: '시니어케어', scores: [79, 90, 66] }
-  ];
+  /* ---------- 통계 밴드 ---------- */
+  var judged = M.judged();
+  $('#kTeams').textContent = M.teams.length;
+  $('#kJudges').textContent = pad2(M.judges.length);
+  $('#kDone').textContent = M.donePct() + '%';
+  $('#kDoneLabel').textContent =
+    '심사 완료 (' + M.byStatus('심사완료').length + ' / ' + M.active() + '팀 · 반려 ' +
+    (M.teams.length - M.active()) + '팀 제외)';
+  $('#kOpen').textContent = pad2(M.openDisputes().length);
+  $('#flagAt').textContent = M.flagSpread;
+  $('#devCaption').textContent = '3인 심사가 모두 끝난 ' + judged.length + '개 팀';
 
-  var MIN = 50, MAX = 100, FLAG_AT = 20;   /* 가로축 구간과 재검토 기준 */
-  var pos = function (v) { return ((v - MIN) / (MAX - MIN)) * 100; };
-  var esc = function (s) {
-    return String(s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  };
-
-  /* 팀별 통계 산출 */
-  var rows = TEAMS.map(function (t) {
-    var lo = Math.min.apply(null, t.scores);
-    var hi = Math.max.apply(null, t.scores);
-    var avg = t.scores.reduce(function (a, b) { return a + b; }, 0) / t.scores.length;
-    return { team: t.team, field: t.field, scores: t.scores, lo: lo, hi: hi, spread: hi - lo, avg: avg };
-  }).sort(function (a, b) { return b.avg - a.avg; });
-
-  /* ---------- 차트 렌더 ---------- */
-  document.getElementById('chart').innerHTML = rows.map(function (r) {
-    var flagged = r.spread >= FLAG_AT;
-
-    var dots = r.scores.map(function (s, i) {
-      return '<span class="dot" style="left:' + pos(s).toFixed(2) + '%" ' +
-             'title="' + esc(JUDGES[i]) + ' · ' + s + '점"></span>';
-    }).join('');
-
-    return '<div class="chart-row' + (flagged ? ' row-flag' : '') + '">' +
-      '<div class="chart-label">' + esc(r.team) +
-        '<span class="sub">' + esc(r.field) + '</span></div>' +
-      '<div class="track" role="img" aria-label="' + esc(r.team) + ' 점수 ' +
-        r.scores.map(function (s, i) { return JUDGES[i] + ' ' + s + '점'; }).join(', ') +
-        '. 평균 ' + r.avg.toFixed(1) + '점, 점수 폭 ' + r.spread + '점">' +
-        '<span class="range" style="left:' + pos(r.lo).toFixed(2) + '%;width:' + (pos(r.hi) - pos(r.lo)).toFixed(2) + '%"></span>' +
-        dots +
-        '<span class="mean" style="left:' + pos(r.avg).toFixed(2) + '%" title="평균 ' + r.avg.toFixed(1) + '점"></span>' +
-      '</div>' +
-      '<div class="chart-val">' +
-        '<span class="avg">' + r.avg.toFixed(1) + '</span>' +
-        '폭 ' + r.spread + '점' +
-        (flagged
-          ? '<span class="flag-row"><span class="badge badge--risk">재검토</span></span>'
-          : '') +
-      '</div>' +
-    '</div>';
+  /* ---------- 심사위원별 진행률 ---------- */
+  $('#judgeBody').innerHTML = M.judges.map(function (j) {
+    var pct = j.assigned ? Math.round((j.done / j.assigned) * 100) : 0;
+    var badge = j.done === 0
+      ? '<span class="badge badge--risk">미착수 · 독려 필요</span>'
+      : (j.done >= j.assigned
+        ? '<span class="badge badge--ok">완료</span>'
+        : '<span class="badge badge--brand">진행중</span>');
+    return '<tr>' +
+      '<th scope="row" class="who">' + esc(j.name) + '</th>' +
+      '<td class="mono">' + j.code + '</td>' +
+      '<td>' + esc(j.fields.join(' · ')) + '</td>' +
+      '<td><div class="mini-bar">' +
+        '<span class="mini-track"><span class="mini-fill" style="width:' + pct + '%"></span></span>' +
+        '<span class="mini-num">' + j.done + '/' + j.assigned + '</span></div></td>' +
+      '<td>' + badge + '</td></tr>';
   }).join('');
 
-  /* ---------- 가로축 눈금 ---------- */
-  var ticks = [50, 60, 70, 80, 90, 100];
-  document.getElementById('axisScale').innerHTML = ticks.map(function (t) {
+  /* ---------- 편차 차트 ---------- */
+  $('#chart').innerHTML = judged.map(function (t) {
+    var dots = t.scores.map(function (s) {
+      return '<span class="dot" style="left:' + pos(s.score).toFixed(2) + '%" ' +
+             'title="' + esc(s.judge) + ' · ' + s.score + '점"></span>';
+    }).join('');
+
+    return '<div class="chart-row' + (t.flagged ? ' row-flag' : '') + '">' +
+      '<div class="chart-label">' + esc(t.name) + '<span class="sub">' + esc(t.field) + '</span></div>' +
+      '<div class="track" role="img" aria-label="' + esc(t.name) + ' 점수 ' +
+        t.scores.map(function (s) { return s.judge + ' ' + s.score + '점'; }).join(', ') +
+        '. 평균 ' + t.avg.toFixed(1) + '점, 점수 폭 ' + t.spread + '점">' +
+        '<span class="range" style="left:' + pos(t.lo).toFixed(2) + '%;width:' + (pos(t.hi) - pos(t.lo)).toFixed(2) + '%"></span>' +
+        dots +
+        '<span class="mean" style="left:' + pos(t.avg).toFixed(2) + '%" title="평균 ' + t.avg.toFixed(1) + '점"></span>' +
+      '</div>' +
+      '<div class="chart-val"><span class="avg">' + t.avg.toFixed(1) + '</span>폭 ' + t.spread + '점' +
+        (t.flagged ? '<span class="flag-row"><span class="badge badge--risk">재검토</span></span>' : '') +
+      '</div></div>';
+  }).join('');
+
+  $('#axisScale').innerHTML = [50, 60, 70, 80, 90, 100].map(function (t) {
     return '<span style="left:' + pos(t) + '%">' + t + '</span>';
   }).join('');
 
-  /* ---------- 점수 취합 표 (차트와 같은 데이터) ---------- */
-  document.getElementById('aggBody').innerHTML = rows.map(function (r, i) {
-    var flagged = r.spread >= FLAG_AT;
+  /* ---------- 점수 취합 표 (차트의 표 뷰) ---------- */
+  $('#aggBody').innerHTML = judged.map(function (t, i) {
     return '<tr>' +
       '<td class="mono">' + (i + 1) + '</td>' +
-      '<th scope="row" class="who">' + esc(r.team) + '</th>' +
-      r.scores.map(function (s) { return '<td class="mono">' + s + '</td>'; }).join('') +
-      '<td class="mono" style="font-weight:700">' + r.avg.toFixed(1) + '</td>' +
-      '<td>' + (flagged
-        ? '<span class="badge badge--risk">' + r.spread + '점</span>'
-        : '<span class="mono muted">' + r.spread + '점</span>') + '</td>' +
-    '</tr>';
+      '<th scope="row" class="who">' + esc(t.name) + '</th>' +
+      '<td>' + esc(t.field) + '</td>' +
+      '<td class="scores-cell">' + t.scores.map(function (s) {
+        return esc(s.judge) + ' ' + s.score;
+      }).join(' · ') + '</td>' +
+      '<td class="mono" style="font-weight:700">' + t.avg.toFixed(1) + '</td>' +
+      '<td>' + (t.flagged
+        ? '<span class="badge badge--risk">' + t.spread + '점</span>'
+        : '<span class="mono muted">' + t.spread + '점</span>') + '</td></tr>';
   }).join('');
 
-  /* ---------- 이의제기 상태 변경 ---------- */
+  /* ---------- 이의제기 관리 ---------- */
   var STATES = ['접수', '검토중', '반영', '기각'];
   var BADGE = { '접수': 'badge--neutral', '검토중': 'badge--brand', '반영': 'badge--ok', '기각': 'badge--risk' };
-  var dpBody = document.getElementById('dpBody');
-  var openCount = document.getElementById('openCount');
+  var dpBody = $('#dpBody');
 
   function refreshOpen() {
-    var open = Array.prototype.slice.call(dpBody.querySelectorAll('tr')).filter(function (tr) {
-      return tr.dataset.status === '접수' || tr.dataset.status === '검토중';
-    }).length;
-    openCount.textContent = open;
+    var n = M.openDisputes().length;
+    $('#openCount').textContent = n;
+    $('#kOpen').textContent = pad2(n);
   }
 
-  Array.prototype.slice.call(dpBody.querySelectorAll('tr')).forEach(function (tr, i) {
-    var cell = tr.children[3];
-    var cur = tr.dataset.status;
+  dpBody.innerHTML = M.disputes.map(function (d, i) {
+    return '<tr>' +
+      '<td class="mono caption">' + d.date + '</td>' +
+      '<th scope="row" class="who">' + esc(d.team) + '</th>' +
+      '<td>' + esc(d.text) + '</td>' +
+      '<td><div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">' +
+        '<span class="badge ' + BADGE[d.status] + '" data-badge="' + i + '">' + d.status + '</span>' +
+        '<select class="select" data-sel="' + i + '" style="min-width:104px" ' +
+        'aria-label="' + esc(d.team) + ' 이의제기 처리 상태 변경">' +
+        STATES.map(function (s) {
+          return '<option value="' + s + '"' + (s === d.status ? ' selected' : '') + '>' + s + '</option>';
+        }).join('') +
+      '</select></div></td></tr>';
+  }).join('');
 
-    var wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:8px';
-
-    var badge = document.createElement('span');
-    badge.className = 'badge ' + BADGE[cur];
-    badge.textContent = cur;
-
-    var sel = document.createElement('select');
-    sel.className = 'select';
-    sel.setAttribute('aria-label', tr.children[1].textContent + ' 이의제기 처리 상태 변경');
-    sel.style.minWidth = '104px';
-    STATES.forEach(function (s) {
-      var o = document.createElement('option');
-      o.value = s; o.textContent = s;
-      if (s === cur) o.selected = true;
-      sel.appendChild(o);
-    });
-
-    sel.addEventListener('change', function () {
-      tr.dataset.status = sel.value;
-      badge.className = 'badge ' + BADGE[sel.value];
-      badge.textContent = sel.value;
-      refreshOpen();
-      toast(tr.children[1].textContent + ' 이의제기를 "' + sel.value + '"으로 변경했습니다. (감사로그 기록됨)');
-    });
-
-    wrap.appendChild(badge);
-    wrap.appendChild(sel);
-    cell.appendChild(wrap);
+  dpBody.addEventListener('change', function (e) {
+    var sel = e.target.closest('[data-sel]');
+    if (!sel) return;
+    var i = +sel.dataset.sel;
+    M.disputes[i].status = sel.value;
+    var badge = dpBody.querySelector('[data-badge="' + i + '"]');
+    badge.className = 'badge ' + BADGE[sel.value];
+    badge.textContent = sel.value;
+    refreshOpen();
+    toast(M.disputes[i].team + ' 이의제기를 "' + sel.value + '"으로 변경했습니다. (감사로그 기록됨)');
   });
+
   refreshOpen();
-
-  /* ---------- 미구현 버튼 ---------- */
-  document.addEventListener('click', function (e) {
-    var btn = e.target.closest('[data-todo]');
-    if (btn) toast('"' + btn.dataset.todo + '" 화면은 아직 목업이 없습니다.');
-  });
 })();
 </script>
 
