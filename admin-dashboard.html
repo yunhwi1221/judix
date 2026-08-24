@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>운영 대시보드 — JudiX</title>
+<meta name="description" content="운영기관용 대시보드. 심사 진행률, 평가위원 간 편차 시각화, 점수 취합, 이의제기 관리.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap">
+
+<link rel="stylesheet" href="assets/judix.css">
+
+<style>
+/* ---- 운영기관 대시보드 전용 ---- */
+body { background: var(--gray-50); }
+
+.page { padding: 32px 0 80px; }
+.page-head { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+.page-head h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 8px; }
+.head-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* 다크 통계 밴드 (패턴 4-4) */
+.statband { background: var(--primary-950); color: var(--white); border-radius: var(--radius-card); padding: 32px; margin-bottom: 24px; }
+.statband-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+.stat-item .num { font-family: var(--font-mono); font-size: var(--fs-stat); line-height: var(--lh-stat); font-weight: 700; color: var(--accent-300); display: block; margin-bottom: 8px; }
+.stat-item .label { color: var(--on-dark-muted); font-size: var(--fs-body-m); font-weight: 500; }
+.statband-note { margin-top: 26px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.14); color: var(--on-dark-muted); font-size: var(--fs-caption); }
+
+/* 진행률 바 (표 안) */
+.mini-bar { display: flex; align-items: center; gap: 10px; min-width: 160px; }
+.mini-track { flex: 1; height: 8px; border-radius: var(--radius-pill); background: var(--gray-200); overflow: hidden; }
+.mini-fill { height: 100%; background: var(--primary-900); border-radius: var(--radius-pill); }
+.mini-num { font-family: var(--font-mono); font-size: var(--fs-caption); font-weight: 700; color: var(--text-500); width: 42px; text-align: right; flex: none; }
+
+/* ============================================================
+   평가위원 간 편차 — 점 분산도
+   심사위원 3명의 점수를 점으로, 최소~최대를 선으로, 평균을 눈금으로.
+   판별색을 쓰지 않고 위치로만 구분하며, 이상치만 상태색+아이콘+텍스트로 표시.
+   ============================================================ */
+.chart { margin-top: 4px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 20px; font-size: var(--fs-caption); color: var(--text-500); }
+.chart-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.lg-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary-900); box-shadow: 0 0 0 2px var(--white); flex: none; }
+.lg-mean { width: 3px; height: 15px; background: var(--text-900); border-radius: 2px; flex: none; }
+.lg-range { width: 18px; height: 2px; background: var(--gray-200); flex: none; }
+
+.chart-row { display: grid; grid-template-columns: 168px minmax(0, 1fr) 108px; gap: 16px; align-items: center; padding: 11px 0; }
+.chart-row + .chart-row { border-top: 1px solid var(--gray-200); }
+.chart-label { font-size: var(--fs-body-m); font-weight: 600; }
+.chart-label .sub { display: block; font-size: var(--fs-caption); font-weight: 500; color: var(--text-500); }
+
+.track { position: relative; height: 34px; }
+.track::before {                       /* 기준선 */
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  height: 1px; background: var(--gray-200);
+}
+.range { position: absolute; top: 50%; height: 2px; background: var(--gray-200); transform: translateY(-50%); border-radius: 2px; }
+.row-flag .range { background: var(--danger); opacity: .35; }
+.dot {
+  position: absolute; top: 50%; width: 11px; height: 11px; border-radius: 50%;
+  background: var(--primary-900); box-shadow: 0 0 0 2px var(--white);
+  transform: translate(-50%, -50%); cursor: default;
+}
+.mean {
+  position: absolute; top: 50%; width: 3px; height: 20px; border-radius: 2px;
+  background: var(--text-900); box-shadow: 0 0 0 2px var(--white);
+  transform: translate(-50%, -50%);
+}
+.chart-val { text-align: right; font-size: var(--fs-caption); color: var(--text-500); }
+.chart-val .avg { font-family: var(--font-mono); font-size: var(--fs-body-l); font-weight: 700; color: var(--text-900); display: block; }
+.row-flag .chart-val .avg { color: var(--danger); }
+
+.axis { display: grid; grid-template-columns: 168px minmax(0, 1fr) 108px; gap: 16px; margin-top: 8px; }
+.axis-scale { position: relative; height: 22px; font-family: var(--font-mono); font-size: var(--fs-caption); color: var(--text-500); }
+.axis-scale span { position: absolute; transform: translateX(-50%); top: 0; }
+
+.flag-row { display: flex; align-items: center; gap: 7px; margin-top: 5px; }
+
+@media (max-width: 860px) {
+  .statband-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-row, .axis { grid-template-columns: 1fr; gap: 8px; }
+  .chart-val { text-align: left; }
+  .chart-val .avg { display: inline; margin-right: 8px; }
+  .axis-scale { display: none; }
+}
+@media (max-width: 768px) {
+  .statband { padding: 24px; }
+  .statband-grid { grid-template-columns: 1fr; gap: 22px; }
+  .page-head { align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<a class="skip-link" href="#main">본문으로 건너뛰기</a>
+
+<header class="app-header">
+  <div class="wrap">
+    <a class="logo" href="index.html">
+      <span class="logo-mark" aria-hidden="true">J</span>
+      <span>JudiX</span>
+    </a>
+    <span class="header-divider" aria-hidden="true"></span>
+    <select class="select" aria-label="대회 선택">
+      <option>2026 청년 창업경진대회 · 본선</option>
+      <option>2026 청년 창업경진대회 · 예선</option>
+    </select>
+
+    <div class="header-right">
+      <span class="badge badge--brand">운영기관</span>
+      <div class="user-chip">
+        <span class="user-avatar" aria-hidden="true">운</span>
+        <div>
+          <span class="name">한국창업진흥원</span>
+          <span class="code">ADMIN-02</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="mock-note">
+  <div class="wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <span class="msg">이 화면은 UI 목업입니다. 기관명·팀명·점수는 모두 예시 데이터입니다. (PRD 6.3 · Phase 2)</span>
+    <nav class="screen-nav" aria-label="목업 화면 이동">
+      <span class="lab">화면 이동</span>
+      <a href="index.html">랜딩</a>
+      <a href="login.html">로그인</a>
+      <a href="judge-dashboard.html">심사위원 목록</a>
+      <a href="application-detail.html">지원서 분석</a>
+      <a href="applicant-result.html">지원자 결과</a>
+      <a href="admin-dashboard.html" aria-current="page">운영기관</a>
+    </nav>
+  </div>
+</div>
+
+<main id="main" class="page">
+  <div class="wrap">
+
+    <div class="page-head">
+      <div>
+        <h1>운영 대시보드</h1>
+        <p class="body-m muted">심사 진행 상황과 평가 편차를 확인하고, 이의제기를 처리합니다.</p>
+      </div>
+      <div class="head-actions">
+        <button class="btn btn--ghost btn--sm" data-todo="심사위원 배정">심사위원 배정</button>
+        <button class="btn btn--primary btn--sm" data-todo="결과보고서 생성">결과보고서 생성</button>
+      </div>
+    </div>
+
+    <!-- ---------- 다크 통계 밴드 (패턴 4-4) ---------- -->
+    <section class="statband" aria-labelledby="kpi-title">
+      <h2 class="h3" id="kpi-title" style="margin-bottom:26px;">대회 현황</h2>
+      <div class="statband-grid">
+        <div class="stat-item">
+          <span class="num">42</span>
+          <span class="label">참가팀</span>
+        </div>
+        <div class="stat-item">
+          <span class="num">12</span>
+          <span class="label">배정된 심사위원</span>
+        </div>
+        <div class="stat-item">
+          <span class="num">68%</span>
+          <span class="label">전체 심사 진행률</span>
+        </div>
+        <div class="stat-item">
+          <span class="num">07</span>
+          <span class="label">미처리 이의제기</span>
+        </div>
+      </div>
+      <p class="statband-note">
+        ※ 위 수치는 진행 상황을 집계한 값이며, 서비스 성과 지표가 아닙니다.
+        평가 편차 감소율 등 성과 지표는 대회 종료 후 검증된 실측치로만 산출합니다.
+      </p>
+    </section>
+
+    <!-- ---------- 심사위원별 진행률 ---------- -->
+    <section class="card" aria-labelledby="prog-title">
+      <div class="card-head">
+        <h2 class="h3" id="prog-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+          심사위원별 진행률
+        </h2>
+        <span class="caption muted">마감 2026-08-27 18:00</span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="data-table" style="min-width:680px;">
+          <thead>
+            <tr>
+              <th scope="col">심사위원</th>
+              <th scope="col">코드</th>
+              <th scope="col">담당 분야</th>
+              <th scope="col">진행률</th>
+              <th scope="col">상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row" class="who">김유니</th>
+              <td class="mono">JD-2026-014</td>
+              <td>농업 · 환경</td>
+              <td>
+                <div class="mini-bar">
+                  <span class="mini-track"><span class="mini-fill" style="width:42%"></span></span>
+                  <span class="mini-num">5/12</span>
+                </div>
+              </td>
+              <td><span class="badge badge--brand">진행중</span></td>
+            </tr>
+            <tr>
+              <th scope="row" class="who">박서준</th>
+              <td class="mono">JD-2026-007</td>
+              <td>의료 · 헬스케어</td>
+              <td>
+                <div class="mini-bar">
+                  <span class="mini-track"><span class="mini-fill" style="width:100%"></span></span>
+                  <span class="mini-num">11/11</span>
+                </div>
+              </td>
+              <td><span class="badge badge--ok">완료</span></td>
+            </tr>
+            <tr>
+              <th scope="row" class="who">이하늘</th>
+              <td class="mono">JD-2026-021</td>
+              <td>핀테크 · 커머스</td>
+              <td>
+                <div class="mini-bar">
+                  <span class="mini-track"><span class="mini-fill" style="width:69%"></span></span>
+                  <span class="mini-num">9/13</span>
+                </div>
+              </td>
+              <td><span class="badge badge--brand">진행중</span></td>
+            </tr>
+            <tr>
+              <th scope="row" class="who">정민호</th>
+              <td class="mono">JD-2026-033</td>
+              <td>제조 · 소재</td>
+              <td>
+                <div class="mini-bar">
+                  <span class="mini-track"><span class="mini-fill" style="width:0%"></span></span>
+                  <span class="mini-num">0/10</span>
+                </div>
+              </td>
+              <td><span class="badge badge--risk">미착수 · 독려 필요</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- 평가위원 간 편차 시각화 ---------- -->
+    <section class="card" aria-labelledby="dev-title">
+      <div class="card-head">
+        <h2 class="h3" id="dev-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><path d="M3 20h18"/></svg>
+          평가위원 간 편차
+        </h2>
+        <span class="caption muted">3인 심사가 모두 끝난 5개 팀</span>
+      </div>
+
+      <p class="body-m muted" style="margin-bottom:18px;">
+        각 팀에 배정된 심사위원 3인의 점수를 나란히 표시합니다.
+        점수 폭이 <strong>20점 이상</strong>이면 재검토 대상으로 표시됩니다.
+      </p>
+
+      <div class="chart-legend">
+        <span><i class="lg-dot" aria-hidden="true"></i> 심사위원 개별 점수</span>
+        <span><i class="lg-mean" aria-hidden="true"></i> 평균</span>
+        <span><i class="lg-range" aria-hidden="true"></i> 최저~최고 범위</span>
+      </div>
+
+      <div class="chart" id="chart"></div>
+
+      <div class="axis" aria-hidden="true">
+        <span></span>
+        <div class="axis-scale" id="axisScale"></div>
+        <span></span>
+      </div>
+
+      <div class="note-box" style="margin-top:20px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>가로축은 50~100점 구간만 표시합니다. 편차가 크다는 것은 오류가 아니라 심사위원 간 관점 차이일 수 있으므로, 재조정 전에 코멘트를 함께 확인하시기 바랍니다.</span>
+      </div>
+    </section>
+
+    <!-- ---------- 점수 취합 (표 형태 — 위 차트의 데이터 뷰) ---------- -->
+    <section class="card" aria-labelledby="agg-title">
+      <div class="card-head">
+        <h2 class="h3" id="agg-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h12"/></svg>
+          점수 취합
+        </h2>
+        <span class="caption muted">평균 점수 내림차순</span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="data-table" id="aggTable" style="min-width:720px;">
+          <caption class="caption muted" style="caption-side:bottom; padding:14px 18px; text-align:left;">
+            위 편차 차트와 동일한 데이터입니다. 최종 순위는 이의제기 처리 완료 후 확정됩니다.
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">순위</th>
+              <th scope="col">팀</th>
+              <th scope="col">김유니</th>
+              <th scope="col">박서준</th>
+              <th scope="col">이하늘</th>
+              <th scope="col">평균</th>
+              <th scope="col">편차</th>
+            </tr>
+          </thead>
+          <tbody id="aggBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- 이의제기 관리 ---------- -->
+    <section class="card" aria-labelledby="dp-title">
+      <div class="card-head">
+        <h2 class="h3" id="dp-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          이의제기 관리
+        </h2>
+        <span class="caption muted" aria-live="polite">미처리 <strong id="openCount" class="mono">3</strong>건</span>
+      </div>
+
+      <div class="table-scroll">
+        <table class="data-table" style="min-width:820px;">
+          <thead>
+            <tr>
+              <th scope="col">접수일</th>
+              <th scope="col">팀</th>
+              <th scope="col">이의 내용</th>
+              <th scope="col">처리 상태</th>
+            </tr>
+          </thead>
+          <tbody id="dpBody">
+            <tr data-status="접수">
+              <td class="mono caption">2026-08-22</td>
+              <th scope="row" class="who">필드로그</th>
+              <td>시장 규모 근거는 사업계획서 부록 3p에 출처를 표기했습니다. 본문만 검토된 것으로 보입니다.</td>
+              <td></td>
+            </tr>
+            <tr data-status="검토중">
+              <td class="mono caption">2026-08-21</td>
+              <th scope="row" class="who">케어링크</th>
+              <td>심사위원 간 점수 차이가 24점에 달합니다. 평가 근거를 확인하고 싶습니다.</td>
+              <td></td>
+            </tr>
+            <tr data-status="접수">
+              <td class="mono caption">2026-08-20</td>
+              <th scope="row" class="who">플랜트원</th>
+              <td>영상에서 언급한 내용이 지원서에 없다고 표시되었으나, 12페이지에 기재되어 있습니다.</td>
+              <td></td>
+            </tr>
+            <tr data-status="반영">
+              <td class="mono caption">2026-08-19</td>
+              <th scope="row" class="who">필드로그</th>
+              <td>하드웨어 담당은 외부 제조 파트너로 계약되어 있으며 9p에 기재했습니다.</td>
+              <td></td>
+            </tr>
+            <tr data-status="기각">
+              <td class="mono caption">2026-08-18</td>
+              <th scope="row" class="who">브릿지핀</th>
+              <td>경쟁사 분석이 부족하다는 지적에 동의하지 않습니다.</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="caption muted" style="margin-top:14px;">
+        상태를 변경하면 지원자 화면의 처리 현황에 즉시 반영되며, 변경 이력은 감사로그(AuditLog)에 기록됩니다.
+      </p>
+    </section>
+
+  </div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var toastEl = document.getElementById('toast'), toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('is-on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('is-on'); }, 2800);
+  }
+
+  /* ==========================================================
+     평가위원 간 편차 데이터
+     scores 순서 = [김유니, 박서준, 이하늘]
+     ========================================================== */
+  var JUDGES = ['김유니', '박서준', '이하늘'];
+  /* 김유니 열의 값은 심사위원 대시보드(judge-dashboard.html)의 '완료' 팀 점수와 일치해야 한다.
+     아직 '진행중'인 팀(필드로그·오션가드 등)은 3인 집계가 끝나지 않아 여기 포함하지 않는다. */
+  var TEAMS = [
+    { team: '사운드핏',     field: '의료기기',   scores: [90, 92, 88] },
+    { team: '모두의노트',   field: '교육·접근성', scores: [88, 91, 85] },
+    { team: '닥터나우케어', field: '헬스케어',   scores: [85, 87, 82] },
+    { team: '플랜트원',     field: '푸드테크',   scores: [81, 90, 68] },
+    { team: '케어링크',     field: '시니어케어', scores: [79, 90, 66] }
+  ];
+
+  var MIN = 50, MAX = 100, FLAG_AT = 20;   /* 가로축 구간과 재검토 기준 */
+  var pos = function (v) { return ((v - MIN) / (MAX - MIN)) * 100; };
+  var esc = function (s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  };
+
+  /* 팀별 통계 산출 */
+  var rows = TEAMS.map(function (t) {
+    var lo = Math.min.apply(null, t.scores);
+    var hi = Math.max.apply(null, t.scores);
+    var avg = t.scores.reduce(function (a, b) { return a + b; }, 0) / t.scores.length;
+    return { team: t.team, field: t.field, scores: t.scores, lo: lo, hi: hi, spread: hi - lo, avg: avg };
+  }).sort(function (a, b) { return b.avg - a.avg; });
+
+  /* ---------- 차트 렌더 ---------- */
+  document.getElementById('chart').innerHTML = rows.map(function (r) {
+    var flagged = r.spread >= FLAG_AT;
+
+    var dots = r.scores.map(function (s, i) {
+      return '<span class="dot" style="left:' + pos(s).toFixed(2) + '%" ' +
+             'title="' + esc(JUDGES[i]) + ' · ' + s + '점"></span>';
+    }).join('');
+
+    return '<div class="chart-row' + (flagged ? ' row-flag' : '') + '">' +
+      '<div class="chart-label">' + esc(r.team) +
+        '<span class="sub">' + esc(r.field) + '</span></div>' +
+      '<div class="track" role="img" aria-label="' + esc(r.team) + ' 점수 ' +
+        r.scores.map(function (s, i) { return JUDGES[i] + ' ' + s + '점'; }).join(', ') +
+        '. 평균 ' + r.avg.toFixed(1) + '점, 점수 폭 ' + r.spread + '점">' +
+        '<span class="range" style="left:' + pos(r.lo).toFixed(2) + '%;width:' + (pos(r.hi) - pos(r.lo)).toFixed(2) + '%"></span>' +
+        dots +
+        '<span class="mean" style="left:' + pos(r.avg).toFixed(2) + '%" title="평균 ' + r.avg.toFixed(1) + '점"></span>' +
+      '</div>' +
+      '<div class="chart-val">' +
+        '<span class="avg">' + r.avg.toFixed(1) + '</span>' +
+        '폭 ' + r.spread + '점' +
+        (flagged
+          ? '<span class="flag-row"><span class="badge badge--risk">재검토</span></span>'
+          : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  /* ---------- 가로축 눈금 ---------- */
+  var ticks = [50, 60, 70, 80, 90, 100];
+  document.getElementById('axisScale').innerHTML = ticks.map(function (t) {
+    return '<span style="left:' + pos(t) + '%">' + t + '</span>';
+  }).join('');
+
+  /* ---------- 점수 취합 표 (차트와 같은 데이터) ---------- */
+  document.getElementById('aggBody').innerHTML = rows.map(function (r, i) {
+    var flagged = r.spread >= FLAG_AT;
+    return '<tr>' +
+      '<td class="mono">' + (i + 1) + '</td>' +
+      '<th scope="row" class="who">' + esc(r.team) + '</th>' +
+      r.scores.map(function (s) { return '<td class="mono">' + s + '</td>'; }).join('') +
+      '<td class="mono" style="font-weight:700">' + r.avg.toFixed(1) + '</td>' +
+      '<td>' + (flagged
+        ? '<span class="badge badge--risk">' + r.spread + '점</span>'
+        : '<span class="mono muted">' + r.spread + '점</span>') + '</td>' +
+    '</tr>';
+  }).join('');
+
+  /* ---------- 이의제기 상태 변경 ---------- */
+  var STATES = ['접수', '검토중', '반영', '기각'];
+  var BADGE = { '접수': 'badge--neutral', '검토중': 'badge--brand', '반영': 'badge--ok', '기각': 'badge--risk' };
+  var dpBody = document.getElementById('dpBody');
+  var openCount = document.getElementById('openCount');
+
+  function refreshOpen() {
+    var open = Array.prototype.slice.call(dpBody.querySelectorAll('tr')).filter(function (tr) {
+      return tr.dataset.status === '접수' || tr.dataset.status === '검토중';
+    }).length;
+    openCount.textContent = open;
+  }
+
+  Array.prototype.slice.call(dpBody.querySelectorAll('tr')).forEach(function (tr, i) {
+    var cell = tr.children[3];
+    var cur = tr.dataset.status;
+
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-wrap:wrap;align-items:center;gap:8px';
+
+    var badge = document.createElement('span');
+    badge.className = 'badge ' + BADGE[cur];
+    badge.textContent = cur;
+
+    var sel = document.createElement('select');
+    sel.className = 'select';
+    sel.setAttribute('aria-label', tr.children[1].textContent + ' 이의제기 처리 상태 변경');
+    sel.style.minWidth = '104px';
+    STATES.forEach(function (s) {
+      var o = document.createElement('option');
+      o.value = s; o.textContent = s;
+      if (s === cur) o.selected = true;
+      sel.appendChild(o);
+    });
+
+    sel.addEventListener('change', function () {
+      tr.dataset.status = sel.value;
+      badge.className = 'badge ' + BADGE[sel.value];
+      badge.textContent = sel.value;
+      refreshOpen();
+      toast(tr.children[1].textContent + ' 이의제기를 "' + sel.value + '"으로 변경했습니다. (감사로그 기록됨)');
+    });
+
+    wrap.appendChild(badge);
+    wrap.appendChild(sel);
+    cell.appendChild(wrap);
+  });
+  refreshOpen();
+
+  /* ---------- 미구현 버튼 ---------- */
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-todo]');
+    if (btn) toast('"' + btn.dataset.todo + '" 화면은 아직 목업이 없습니다.');
+  });
+})();
+</script>
+
+</body>
+</html>
